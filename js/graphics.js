@@ -10,7 +10,7 @@
 /// <reference path="game.js" />
 
 
-var textureRoot = '../res/';
+var textureRoot = './res/';
 var textureLength = 0;
 var textureCount = 0;
 var textureFiles = new Array(0);
