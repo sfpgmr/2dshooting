@@ -1,10 +1,7 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
 /// <reference path="graphics.js" />
 /// <reference path="io.js" />
 /// <reference path="song.js" />
 /// <reference path="audio.js" />
-/// <reference path="text.js" />
 /// <reference path="util.js" />
 /// <reference path="gameobj.js" />
 /// <reference path="enemies.js" />
@@ -44,16 +41,28 @@ function TextPlane() {
   // 描画用キャンバスのセットアップ
 
   this.canvas = $('<canvas>')[0];
-  this.canvas.width = VIRTUAL_WIDTH;
-  this.canvas.height = VIRTUAL_HEIGHT;
+  var width = 1;
+  while (width <= VIRTUAL_WIDTH){
+    width *= 2;
+  }
+  var height = 1;
+  while (height <= VIRTUAL_HEIGHT){
+    height *= 2;
+  }
+  
+  this.canvas.width = width;
+  this.canvas.height = height;
   this.ctx = this.canvas.getContext('2d');
   this.texture = new THREE.Texture(this.canvas);
   this.texture.magFilter = THREE.NearestFilter;
   this.texture.minFilter = THREE.LinearMipMapLinearFilter;
-  this.material = new THREE.MeshBasicMaterial({ map: this.texture,alphaTest:0.5/*, transparent: true,depthTest:true */});
-  this.geometry = new THREE.PlaneGeometry(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+  this.material = new THREE.MeshBasicMaterial({ map: this.texture,alphaTest:0.5, transparent: true,depthTest:true,shading:THREE.FlatShading});
+//  this.geometry = new THREE.PlaneGeometry(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+  this.geometry = new THREE.PlaneGeometry(width, height);
   this.mesh = new THREE.Mesh(this.geometry, this.material);
   this.mesh.position.z = 0.4;
+  this.mesh.position.x = (width - VIRTUAL_WIDTH) / 2;
+  this.mesh.position.y =  - (height - VIRTUAL_HEIGHT) / 2;
   this.fonts = { font: textureFiles.font, font1: textureFiles.font1 };
   this.blinkCount = 0;
   this.blink = false;
@@ -61,7 +70,7 @@ function TextPlane() {
   // スムージングを切る
   this.ctx.msImageSmoothingEnabled = false;
   this.ctx.imageSmoothingEnabled = false;
-  this.ctx.webkitImageSmoothingEnabled = false;
+  //this.ctx.webkitImageSmoothingEnabled = false;
   this.ctx.mozImageSmoothingEnabled = false;
 
   this.cls();
@@ -69,6 +78,7 @@ function TextPlane() {
 }
 
 TextPlane.prototype = {
+  constructor:TextPlane,
   /// 画面消去
   cls: function () {
     for (var i = 0, endi = this.textBuffer.length; i < endi; ++i) {
@@ -132,7 +142,8 @@ TextPlane.prototype = {
       draw_blink = true;
     }
     var update = false;
-    //ctx.clearRect(0, 0, CONSOLE_WIDTH, CONSOLE_HEIGHT);
+//    ctx.clearRect(0, 0, CONSOLE_WIDTH, CONSOLE_HEIGHT);
+//    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     for (var y = 0, gy = 0; y < TEXT_HEIGHT; ++y, gy += ACTUAL_CHAR_SIZE) {
       var line = this.textBuffer[y];

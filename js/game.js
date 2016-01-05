@@ -1,6 +1,4 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
-/// <reference path="http://localhost:8081/socket.io/socket.io.js" />
+/// <reference path="./dsp.js" />
 /// <reference path="graphics.js" />
 /// <reference path="io.js" />
 /// <reference path="song.js" />
@@ -11,7 +9,6 @@
 /// <reference path="enemies.js" />
 /// <reference path="effectobj.js" />
 /// <reference path="myship.js" />
-/// <reference path="game.js" />
 /// <reference path="comm.js" />
 
 var CONSOLE_WIDTH = 480.0;
@@ -168,7 +165,7 @@ function initConsole() {
   // レンダラーの作成
   renderer = new THREE.WebGLRenderer({ antialias: false,sortObjects: true });
   renderer.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
-  renderer.setClearColorHex(0x000000, 1);
+  renderer.setClearColor(0,1);
   renderer.domElement.id = 'console';
   renderer.domElement.className = 'console';
   renderer.domElement.style.zIndex = 0;
@@ -198,7 +195,7 @@ function initConsole() {
 
   // カメラの作成
   camera = new THREE.PerspectiveCamera(90.0, CONSOLE_WIDTH / CONSOLE_HEIGHT);
-  camera.position = new THREE.Vector3(0, 0, 120.0 * CONSOLE_HEIGHT / CONSOLE_WIDTH);
+  camera.position.z = CONSOLE_HEIGHT / 4;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   //var camera = new THREE.Camera();
@@ -319,8 +316,8 @@ $(window).ready(function () {
     loadCompletedCount: 0,
     totalTextureCount: 0,
     isLoadComplete: function () { return loadCompletedCount == totalTextureCount; },
-    font: (new TextureFile('Font.png', textureFiles)),
-    font1: (new TextureFile('Font2.png', textureFiles)),
+     font: (new TextureFile('Font.png', textureFiles)),
+     font1: (new TextureFile('Font2.png', textureFiles)),
     author: (new TextureFile('author.png', textureFiles)),
     title: (new TextureFile('TITLE.png', textureFiles)),
     myship: (new TextureFile('myship2.png', textureFiles)),

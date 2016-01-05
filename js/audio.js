@@ -140,6 +140,8 @@ function EnvelopeGenerator(voice, attack, decay, sustain, release) {
   this.decay = decay || 0.05;
   this.sustain = sustain || 0.5;
   this.release = release || 0.5;
+  this.v = 1.0;
+
 };
 
 EnvelopeGenerator.prototype =
@@ -194,13 +196,11 @@ Voice.prototype = {
   },
 
   setSample: function (sample) {
-    this.envelope.keyoff(0);
-    this.sample = sample;
-    this.processor.buffer = this.sample.sample;
-    this.processor.loop = this.sample.loop;
-    this.processor.loopStart = 0;
-    this.processor.playbackRate.value = 1.0;
-    this.processor.loopEnd = this.sample.end;
+      this.envelope.keyoff(0);
+      this.processor.disconnect(this.gain);
+      this.sample = sample;
+      this.initProcessor();
+      this.processor.start();
   },
   start: function (startTime) {
  //   if (this.processor.playbackState == 3) {

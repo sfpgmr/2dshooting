@@ -1,6 +1,3 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
-/// <reference path="graphics.js" />
 /// <reference path="io.js" />
 /// <reference path="song.js" />
 /// <reference path="audio.js" />
@@ -13,7 +10,7 @@
 /// <reference path="game.js" />
 
 
-var textureRoot = '../data/';
+var textureRoot = '../res/';
 var textureLength = 0;
 var textureCount = 0;
 var textureFiles = new Array(0);
@@ -26,7 +23,8 @@ function TextureFile(src, parent) {
   this.loadComplete = false;
   this.loadError = false;
   var self = this;
-  this.texture = THREE.ImageUtils.loadTexture(textureRoot + this.src, {},
+  var loader = new THREE.TextureLoader();
+  this.texture = THREE.ImageUtils.loadTexture(textureRoot + this.src, null,
     function (texture) {
       self.loadComplete = true;
       if (self.src.match(/\.png/i)) {
@@ -61,7 +59,7 @@ function CanvasTexture(width, height) {
   // スムージングを切る
   this.ctx.msImageSmoothingEnabled = false;
   this.ctx.imageSmoothingEnabled = false;
-  this.ctx.webkitImageSmoothingEnabled = false;
+  //this.ctx.webkitImageSmoothingEnabled = false;
   this.ctx.mozImageSmoothingEnabled = false;
 }
 
@@ -69,7 +67,7 @@ function CanvasTexture(width, height) {
 function Progress() {
   this.canvas = $('<canvas>')[0];
   this.canvas.width = VIRTUAL_WIDTH;
-  this.canvas.height = 160;
+  this.canvas.height = VIRTUAL_HEIGHT;
   this.ctx = this.canvas.getContext('2d');
   this.texture = new THREE.Texture(this.canvas);
   this.texture.magFilter = THREE.NearestFilter;
@@ -77,7 +75,7 @@ function Progress() {
   // スムージングを切る
   this.ctx.msImageSmoothingEnabled = false;
   this.ctx.imageSmoothingEnabled = false;
-  this.ctx.webkitImageSmoothingEnabled = false;
+  //this.ctx.webkitImageSmoothingEnabled = false;
   this.ctx.mozImageSmoothingEnabled = false;
 
   this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
