@@ -12,11 +12,11 @@
 /// <reference path="myship.js" />
 /// <reference path="game.js" />
 /// <reference path="http://localhost:8081/socket.io/socket.io.js" />
-
 function Comm() {
+  var host = 'www.sfpgmr.net';
   this.enable = false;
   try {
-    this.socket = io.connect('http://' + window.location.hostname + ':8081/test');
+    this.socket = io.connect('http://' + host + ':8081/test');
     this.enable = true;
     var self = this;
     this.socket.on('sendHighScores', this.updateHighScores);
