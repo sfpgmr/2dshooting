@@ -1,0 +1,25 @@
+{
+  "name": "2dshooting",
+  "version": "1.0.0",
+  "description": "2D Shooting Game",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "devrelease": "node devrelease.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sfpgmr/2dshooting.git"
+  },
+  "keywords": [
+    "game"
+  ],
+  "author": "S.F.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sfpgmr/2dshooting/issues"
+  },
+  "homepage": "https://github.com/sfpgmr/2dshooting#readme",
+  "devDependencies": {
+  }
+}

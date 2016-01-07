@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Galaxy Fight Game</title>
+  <meta name="keywords" content="WebGL,HTML5,three.js" />
+  <meta name="description" content="WebGL,HTML5,three.js" />
+  <meta charset="UTF-8">
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
+  <script type="text/javascript" src="//mrdoob.github.io/three.js/examples/js/Detector.js"></script>
+  <script type="text/javascript" src="//mrdoob.github.io/three.js/examples/js/libs/stats.min.js"></script>
+  <script type="text/javascript" src="./js/dsp.js"></script>
+ <!-- <script type="text/javascript" src="//localhost:8081/socket.io/socket.io.js"></script> -->
+  <script type="text/javascript" src="//www.sfpgmr.net:8081/socket.io/socket.io.js"></script>
+
+  <script type="text/javascript" src="./js/util.js"></script>
+  <script type="text/javascript" src="./js/audio.js"></script>
+  <script type="text/javascript" src="./js/song.js"></script>
+  <script type="text/javascript" src="./js/graphics.js"></script>
+  <script type="text/javascript" src="./js/io.js"></script>
+  <script type="text/javascript" src="./js/comm.js"></script>
+  <script type="text/javascript" src="./js/text.js"></script>
+  <script type="text/javascript" src="./js/game.js"></script>
+  <script type="text/javascript" src="./js/gameobj.js"></script>
+  <script type="text/javascript" src="./js/myship.js"></script>
+  <script type="text/javascript" src="./js/enemies.js"></script>
+  <script type="text/javascript" src="./js/effectobj.js"></script>
+  <style type="text/css">
+    .content {
+      width: 480px;
+      position: relative;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 0;
+      margin-bottom: 0;
+      padding: 0;
+      border: 0;
+    }
+    .error {
+      position: relative;
+      margin: 0;
+      padding: 0;
+      border: 0;
+   }
+    .errorimg {
+      position:absolute;
+      left:0;
+      top:0;
+    }
+
+    .errortext{
+      position: absolute;
+      left: 0;
+      top: 0;
+      background-color:rgba(80,80,80,0.7);
+      color:white;
+    }
+
+    .navigation {
+      position: relative;
+      display: block;
+      vertical-align: top;
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+
+    body {
+      padding: 0;
+      border: 0;
+      margin: 0;
+    }
+
+    nav > button {
+      width: 100px;
+      height: 45px;
+      border: 2px solid rgba(255,0,0,1.0);
+      padding: 2px;
+      margin: 2px;
+      color: rgba(255,0,0,1.0);
+      background: rgba(0,0,0,0);
+    }
+
+      nav > button:hover {
+        border-color: rgba(255,0,0,1.0);
+        color: rgba(255,0,0,1.0);
+        background: rgba(255,0,0,0.55);
+      }
+
+    .source-code {
+      position: absolute;
+      display: none;
+      left: 0;
+      padding-top: 0px;
+      margin: 0px;
+      border: 0px;
+      overflow-y: auto;
+      overflow-wrap: break-word;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 10px;
+    }
+
+    .console {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .header {
+      position: relative;
+      height: 50px;
+    }
+
+    .info-display {
+      position: absolute;
+    }
+
+    #enemy-list,#enemy-move{
+      position:absolute;
+      left:0;
+      top:0;
+      border:1px solid black;
+      width:400px;
+      height:200px;
+      overflow:auto;
+      font-size:8px;
+    }
+
+    #enemy-move {
+      top:300px;
+    }
+
+    #input-area:focus, #input-area:invalid, #input-area:valid, #input-area:out-of-range {
+      position: absolute;
+      top: 200px;
+      left: 150px;
+      width: 100px;
+      height: 20px;
+      border: 0;
+      color: rgba(0,0,0,0.0);
+      background: rgba(0,0,0,0);
+      outline-color: rgba(0,0,0,0);
+      text-decoration:none;
+      text-decoration-color:rgba(0,0,0,0);
+      z-index:-3;
+    }
+  </style>
+</head>
+<body>
+  <div id="content" class="content">
+    <header class="header">
+      <nav id="navigation" class="navigation">
+        <button id="Start" title="クリックすると開始・停止">Start</button>
+        <button id="Show-Code" title="ソースコードの表示">ソース表示</button>
+      </nav>
+    </header>
+    <pre id="source-code" class="source-code">
+    </pre>
+  </div>
+</body>
+</html>
