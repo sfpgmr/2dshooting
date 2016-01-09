@@ -17,7 +17,7 @@ gulp.task('js',function(){
     .transform(babelify,{"plugins": [
       "transform-es2015-arrow-functions",
 //      "transform-es2015-block-scoped-functions",
-//      "transform-es2015-block-scoping",
+      "transform-es2015-block-scoping",
       "transform-es2015-classes",
 //      "transform-es2015-computed-properties",
 //      "transform-es2015-constants",
