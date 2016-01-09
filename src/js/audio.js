@@ -353,11 +353,12 @@ function setQueue(track,note,oct,step,gate,vel)
 {
   var no = note.no + oct * 12;
   var step_time = track.playingTime;
-  var gate_time = ((gate >= 0) ? gate * 60 : step * gate * 60 * -1.0) / (TIME_BASE * track.sequencer.tempo) + track.playingTime;
+  var gate_time = ((gate >= 0) ? gate * 60 : step * gate * 60 * -1.0) / (TIME_BASE * track.localTempo) + track.playingTime;
   var voice = track.audio.voices[track.channel];
+  //console.log(track.sequencer.tempo);
   voice.keyon(step_time, no, vel);
   voice.keyoff(gate_time);
-  track.playingTime = (step * 60) / (TIME_BASE * track.sequencer.tempo) + track.playingTime;
+  track.playingTime = (step * 60) / (TIME_BASE * track.localTempo) + track.playingTime;
   var back = track.back;
   back.note = note;
   back.oct = oct;
@@ -505,7 +506,7 @@ function Rest(step)
 Rest.prototype.process = function(track)
 {
   var step = this.step || track.back.step;
-  track.playingTime = track.playingTime + (this.step * 60) / (TIME_BASE * track.sequencer.tempo);
+  track.playingTime = track.playingTime + (this.step * 60) / (TIME_BASE * track.localTempo);
   track.back.step = this.step;
 }
 
@@ -543,7 +544,8 @@ function Tempo(tempo)
 
 Tempo.prototype.process = function(track)
 {
-  track.sequencer.tempo = this.tempo;
+  track.localTempo = this.tempo;
+  //track.sequencer.tempo = this.tempo;
 }
 
 function TEMPO(tempo)
@@ -681,7 +683,6 @@ Track.prototype = {
 
     if (this.end) return;
     
-    var os = false;
     if (this.oneshot) {
       this.reset();
     }
@@ -771,14 +772,13 @@ Sequencer.prototype = {
   process:function()
   {
     if (this.status == this.PLAY) {
-      var tracks = this.tracks;
-      this.playTracks(tracks);
-      var self = this;
-      this.handle = window.setTimeout(function () { self.process() }, 50);
+      this.playTracks(this.tracks);
+      this.handle = window.setTimeout(this.process.bind(this), 100);
     }
   },
   playTracks: function (tracks){
     var currentTime = this.audio.audioctx.currentTime;
+ //   console.log(this.audio.audioctx.currentTime);
     for (var i = 0, end = tracks.length; i < end; ++i) {
       tracks[i].process(currentTime);
     }
@@ -877,7 +877,7 @@ export var seqData = {
         LOOP('i',4),
         C, C, C, C, C, C, C, C,
         LOOP_END,
-        JUMP(6)
+        JUMP(5)
       ]
     },
     {
@@ -886,13 +886,13 @@ export var seqData = {
       data:
         [
         ENV(0.01, 0.05, 0.6, 0.07),
-        TONE(6), VOLUME(0.2), L(8), GT(-0.8),O(6),
+        TEMPO(180),TONE(6), VOLUME(0.2), L(8), GT(-0.8),
         R(1), R(1),
-        L(1), F,
+        O(6),L(1), F,
         E,
         OD, L(8, true), Bb, G, L(4), Bb, OU, L(4), F, L(8), D,
         L(4, true), E, L(2), C,R(8),
-        JUMP(7)
+        JUMP(8)
         ]
     },
     {
@@ -901,13 +901,12 @@ export var seqData = {
       data:
         [
         ENV(0.01, 0.05, 0.6, 0.07),
-        TONE(6), VOLUME(0.1), L(8), GT(-0.5), O(6),DETUNE(0.992),
+        TEMPO(180),TONE(6), VOLUME(0.1), L(8), GT(-0.5), 
         R(1), R(1),
-        O(6),L(1), C,
-        C,
+        O(6),L(1), C,C,
         OD, L(8, true), G, D, L(4), G, OU, L(4), D, L(8),OD, G,
         L(4, true), OU,C, L(2),OD, G, R(8),
-        JUMP(8)
+        JUMP(7)
         ]
     }
   ]
