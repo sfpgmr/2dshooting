@@ -165,10 +165,8 @@ function initConsole() {
   stats = new Stats();
   stats.domElement.style.position = 'absolute';
   stats.domElement.style.top = '0px';
-
-
-   d3.select('#content').node().appendChild(stats.domElement);
-  stats.domElement.style.left = renderer.domElement.clientWidth - stats.domElement.clientWidth + 'px';
+  d3.select('#content').node().appendChild(stats.domElement);
+  stats.domElement.style.left = renderer.domElement.style.left;
 
   //2D描画コンテキストの表示
 
@@ -282,6 +280,8 @@ window.onload = function () {
   {
     return new Promise((resolve,reject)=>{
       loader.load(src,(texture)=>{
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.LinearMipMapLinearFilter;
         resolve(texture);
       },null,(xhr)=>{reject(xhr)});
     });
