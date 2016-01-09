@@ -1,31 +1,24 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
-/// <reference path="graphics.js" />
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="audio.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="gameobj.js" />
-/// <reference path="enemies.js" />
-/// <reference path="effectobj.js" />
-/// <reference path="myship.js" />
-/// <reference path="game.js" />
+"use strict";
+import * as sfg from './global';
+import *  as gameobj from './gameobj';
+import * as graphics from './graphics';
+
 
 /// 爆発
-
-function Bomb() {
-  GameObj.call(this, 0, 0, 0);
-  var tex = textureFiles.bomb.texture;
-  var material = createSpriteMaterial(tex);
+export function Bomb(scene,se) {
+  gameobj.GameObj.call(this, 0, 0, 0);
+  var tex = sfg.textureFiles.bomb;
+  var material = graphics.createSpriteMaterial(tex);
   material.blending = THREE.AdditiveBlending;
   material.needsUpdate = true;
-  var geometry = createSpriteGeometry(16);
-  createSpriteUV(geometry, tex, 16, 16, 0);
+  var geometry = graphics.createSpriteGeometry(16);
+  graphics.createSpriteUV(geometry, tex, 16, 16, 0);
   this.mesh = new THREE.Mesh(geometry, material);
   this.mesh.position.z = 0.1;
   this.index = 0;
   this.mesh.visible = false;
+  this.scene = scene;
+  this.se = se;
   scene.add(this.mesh);
 }
 
@@ -46,9 +39,9 @@ Bomb.prototype = {
     this.z = z | 0.00002;
     this.enable_ = true;
     this.index = 0;
-    updateSpriteUV(this.mesh.geometry, textureFiles.bomb.texture, 16, 16, this.index);
+    graphics.updateSpriteUV(this.mesh.geometry, sfg.textureFiles.bomb, 16, 16, this.index);
     var self = this;
-    tasks.pushTask(function (i) { self.move(i); });
+    sfg.tasks.pushTask(function (i) { self.move(i); });
     this.mesh.material.opacity = 1.0;
     return true;
   },
@@ -61,20 +54,20 @@ Bomb.prototype = {
     }
     this.index++;
     if (this.index < 7) {
-      updateSpriteUV(this.mesh.geometry, textureFiles.bomb.texture, 16, 16, this.index);
+      graphics.updateSpriteUV(this.mesh.geometry, sfg.textureFiles.bomb, 16, 16, this.index);
     } else {
       this.enable_ = false;
       this.mesh.visible = false;
-      tasks.removeTask(taskIndex);
+      sfg.tasks.removeTask(taskIndex);
     }
 
   }
 }
 
-function Bombs() {
+export function Bombs(scene,se) {
   this.bombs = new Array(0);
   for (var i = 0; i < 32; ++i) {
-    this.bombs.push(new Bomb());
+    this.bombs.push(new Bomb(scene,se));
   }
 }
 

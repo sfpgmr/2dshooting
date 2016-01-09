@@ -1,28 +1,18 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
-/// <reference path="graphics.js" />
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="audio.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="gameobj.js" />
-/// <reference path="enemies.js" />
-/// <reference path="effectobj.js" />
-/// <reference path="myship.js" />
-/// <reference path="game.js" />
-
+"use strict";
+import *  as gameobj from './gameobj';
+import * as sfg from './global';
+import * as graphics from './graphics';
 
 /// 敵弾
-function EnemyBullet()
+export function EnemyBullet(scene,se)
 {
-  GameObj.call(this, 0, 0, 0);
+  gameobj.GameObj.call(this, 0, 0, 0);
   this.collisionArea.width = 2;
   this.collisionArea.height = 2;
-  var tex = textureFiles.enemy.texture;
-  var material = createSpriteMaterial(tex);
-  var geometry = createSpriteGeometry(16);
-  createSpriteUV(geometry, tex, 16, 16, 0);
+  var tex = sfg.textureFiles.enemy;
+  var material = graphics.createSpriteMaterial(tex);
+  var geometry = graphics.createSpriteGeometry(16);
+  graphics.createSpriteUV(geometry, tex, 16, 16, 0);
   this.mesh = new THREE.Mesh(geometry, material);
   this.z = 0.0;
   this.mvPattern = null;
@@ -36,7 +26,9 @@ function EnemyBullet()
   this.enable = false;
   this.hit_ = null;
   this.status = this.NONE;
+  this.scene = scene;
   scene.add(this.mesh);
+  this.se = se;
 }
 
 EnemyBullet.prototype = {
@@ -62,14 +54,14 @@ EnemyBullet.prototype = {
     this.x = this.x + this.dx;
     this.y = this.y + this.dy;
 
-    if(this.x < (V_LEFT - 16) ||
-       this.x > (V_RIGHT + 16) ||
-       this.y < (V_BOTTOM - 16) ||
-       this.y > (V_TOP + 16)) {
+    if(this.x < (sfg.V_LEFT - 16) ||
+       this.x > (sfg.V_RIGHT + 16) ||
+       this.y < (sfg.V_BOTTOM - 16) ||
+       this.y > (sfg.V_TOP + 16)) {
        this.mesh.visible = false;
        this.status = this.NONE;
        this.enable = false;
-       tasks.removeTask(taskIndex);
+       sfg.tasks.removeTask(taskIndex);
     }
    },
   start: function (x, y, z) {
@@ -85,19 +77,19 @@ EnemyBullet.prototype = {
       debugger;
     }
     this.status = this.MOVE;
-    var aimRadian = Math.atan2(myShip.y - y, myShip.x - x);
+    var aimRadian = Math.atan2(sfg.myship_.y - y, sfg.myship_.x - x);
     this.mesh.rotation.z = aimRadian;
-    this.dx = Math.cos(aimRadian) * (this.speed + stage.difficulty);
-    this.dy = Math.sin(aimRadian) * (this.speed + stage.difficulty);
+    this.dx = Math.cos(aimRadian) * (this.speed + sfg.stage.difficulty);
+    this.dy = Math.sin(aimRadian) * (this.speed + sfg.stage.difficulty);
 //    console.log('dx:' + this.dx + ' dy:' + this.dy);
 
     var enb = this;
-    this.task = tasks.pushTask(function (i) { enb.move(i); });
+    this.task = sfg.tasks.pushTask(function (i) { enb.move(i); });
     return true;
   },
   hit: function () {
     this.enable = false;
-    tasks.removeTask(this.task.index);
+    sfg.tasks.removeTask(this.task.index);
     this.status = this.NONE;
   },
   NONE: 0,
@@ -105,11 +97,12 @@ EnemyBullet.prototype = {
   BOMB: 2
 }
 
-function EnemyBullets()
+export function EnemyBullets(scene,se)
 {
+  this.scene = scene;
   this.enemyBullets = [];
   for (var i = 0; i < 48; ++i) {
-    this.enemyBullets.push(new EnemyBullet());
+    this.enemyBullets.push(new EnemyBullet(this.scene,se));
   }
 }
 
@@ -130,7 +123,7 @@ EnemyBullets.prototype = {
       if (ebs[i].enable) {
         ebs[i].enable = false;
         ebs[i].status = ebs[i].NONE;
-        tasks.removeTask(ebs[i].task.index);
+        sfg.tasks.removeTask(ebs[i].task.index);
       }
     }
   }
@@ -223,7 +216,7 @@ CircleMove.prototype = {
     self.x = self.sx + (self.xrev?delta.x * -1:delta.x);
     self.y = self.sy + delta.y;
     if (self.xrev) {
-      self.charRad = (PI - delta.rad) + (this.left ? -1 : 0) * Math.PI;
+      self.charRad = (Math.PI - delta.rad) + (this.left ? -1 : 0) * Math.PI;
     } else {
       self.charRad = delta.rad + (this.left ? 0 : -1) * Math.PI;
     }
@@ -237,7 +230,7 @@ CircleMove.prototype = {
 };
 
 /// ホームポジションに戻る
-function GotoHome() {
+export function GotoHome() {
 
 }
 
@@ -263,9 +256,9 @@ GotoHome.prototype = {
       self.moveEnd = true;
       if (self.status == self.START) {
         var groupID = self.groupID;
-        var groupData = enemies.groupData;
+        var groupData = self.enemies.groupData;
         groupData[groupID].push(self);
-        enemies.homeEnemiesCount++;
+        self.enemies.homeEnemiesCount++;
       }
       self.status = self.HOME;
       return;
@@ -276,7 +269,7 @@ GotoHome.prototype = {
 }
 
 ///
-function HomeMove(){};
+export function HomeMove(){};
 HomeMove.prototype = 
 {
   CENTER_X:0,
@@ -296,14 +289,14 @@ HomeMove.prototype =
       self.z = 0.0;
       return;
     }
-    self.x =  self.homeX + self.dx * enemies.homeDelta;
-    self.y = self.homeY + self.dy * enemies.homeDelta;
-    self.mesh.scale.x = enemies.homeDelta2;
+    self.x =  self.homeX + self.dx * self.enemies.homeDelta;
+    self.y = self.homeY + self.dy * self.enemies.homeDelta;
+    self.mesh.scale.x = self.enemies.homeDelta2;
   }
 }
 
 /// 指定シーケンスに移動する
-function Goto(pos) { this.pos = pos; };
+export function Goto(pos) { this.pos = pos; };
 Goto.prototype =
 {
   start: function (self, x, y) {
@@ -315,16 +308,15 @@ Goto.prototype =
 }
 
 /// 敵弾発射
-function Fire() {
-
+export function Fire() {
 }
 
 Fire.prototype = {
   start: function (self, x, y) {
-    d = (stage.no / 20) * ( stage.difficulty);
+    let d = (sfg.stage.no / 20) * ( sfg.stage.difficulty);
     if (d > 1) { d = 1.0;}
     if (Math.random() < d) {
-      enemyBullets.start(self.x, self.y);
+      self.enemies.enemyBullets.start(self.x, self.y);
       self.moveEnd = true;
     }
     return false;
@@ -335,14 +327,14 @@ Fire.prototype = {
 }
 
 /// 敵本体
-function Enemy() {
-  GameObj.call(this, 0, 0, 0);
+export function Enemy(enemies,scene,se) {
+  gameobj.GameObj.call(this, 0, 0, 0);
   this.collisionArea.width = 12;
   this.collisionArea.height = 8;
-  var tex = textureFiles.enemy.texture;
-  var material = createSpriteMaterial(tex);
-  var geometry = createSpriteGeometry(16);
-  createSpriteUV(geometry, tex, 16, 16, 0);
+  var tex = sfg.textureFiles.enemy;
+  var material = graphics.createSpriteMaterial(tex);
+  var geometry = graphics.createSpriteGeometry(16);
+  graphics.createSpriteUV(geometry, tex, 16, 16, 0);
   this.mesh = new THREE.Mesh(geometry, material);
   this.groupID = 0;
   this.z = 0.0;
@@ -356,7 +348,10 @@ function Enemy() {
   this.life = 0;
   this.task = null;
   this.hit_ = null;
-  scene.add(this.mesh);
+  this.scene = scene;
+  this.scene.add(this.mesh);
+  this.se = se;
+  this.enemies = enemies;
 }
 
 Enemy.prototype = {
@@ -383,7 +378,7 @@ Enemy.prototype = {
       }
     }
     this.mv.move(this);
-    this.mesh.scale.x = enemies.homeDelta2;
+    this.mesh.scale.x = this.enemies.homeDelta2;
     this.mesh.rotation.z = this.charRad;
   },
   /// 初期化
@@ -412,7 +407,7 @@ Enemy.prototype = {
     //}
     this.status = this.START;
     var self = this;
-    this.task = tasks.pushTask(function (i) { self.move(i); }, 10000);
+    this.task = sfg.tasks.pushTask(function (i) { self.move(i); }, 10000);
     this.mesh.visible = true;
     return true;
   },
@@ -421,28 +416,30 @@ Enemy.prototype = {
       this.life--;
       if (this.life == 0) {
 //        this.enable_ = false;
-        bombs.start(this.x, this.y);
-        sequencer.playTracks(soundEffects.soundEffects[1]);
-        addScore(this.score);
+        sfg.bombs.start(this.x, this.y);
+        this.se(1);
+//        sequencer.playTracks(soundEffects.soundEffects[1]);
+        sfg.addScore(this.score);
         if (this.clearTarget) {
-          enemies.hitEnemiesCount++;
+          this.enemies.hitEnemiesCount++;
           if (this.status == this.START) {
-            enemies.homeEnemiesCount++;
-            enemies.groupData[this.groupID].push(this);
+            this.enemies.homeEnemiesCount++;
+            this.enemies.groupData[this.groupID].push(this);
           }
-          enemies.groupData[this.groupID].goneCount++;
+          this.enemies.groupData[this.groupID].goneCount++;
         }
         this.mesh.visible = false;
         this.enable_ = false;
         this.status = this.NONE;
-        tasks.removeTask(this.task.index);
+        sfg.tasks.removeTask(this.task.index);
       } else {
-        sequencer.playTracks(soundEffects.soundEffects[2]);
+        this.se(2);
+//        sequencer.playTracks(soundEffects.soundEffects[2]);
         this.mesh.material.color.setHex(0xFF8080);
         //        this.mesh.material.needsUpdate = true;
       }
     } else {
-      hit_();
+      this.hit_();
     }
   },
   NONE: 0 | 0,
@@ -455,28 +452,30 @@ Enemy.prototype = {
 function Zako(self) {
   self.score = 50;
   self.life = 1;
-  updateSpriteUV(self.mesh.geometry, textureFiles.enemy.texture, 16, 16, 7);
+  graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 7);
 }
 
 function Zako1(self) {
   self.score = 100;
   self.life = 1;
-  updateSpriteUV(self.mesh.geometry, textureFiles.enemy.texture, 16, 16, 6);
+  graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 6);
 }
 
 function MBoss(self) {
   self.score = 300;
   self.life = 2;
   self.mesh.blending = THREE.NormalBlending;
-  updateSpriteUV(self.mesh.geometry, textureFiles.enemy.texture, 16, 16, 4);
+  graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 4);
 }
 
-function Enemies() {
+export function Enemies(scene,se,enemyBullets) {
+  this.enemyBullets = enemyBullets;
+  this.scene = scene;
   this.nextTime = 0;
   this.currentIndex = 0;
   this.enemies = new Array(0);
   for (var i = 0; i < 64; ++i) {
-    this.enemies.push(new Enemy());
+    this.enemies.push(new Enemy(this,scene,se));
   }
   for(var i = 0;i < 5;++i){
     this.groupData[i] = new Array(0);
@@ -485,12 +484,12 @@ function Enemies() {
 
 /// 敵編隊の動きをコントロールする
 Enemies.prototype.move = function () {
-  var currentTime = gameTimer.elapsedTime;
+  var currentTime = sfg.gameTimer.elapsedTime;
   var moveSeqs = this.moveSeqs;
-  var len = moveSeqs[stage.privateNo].length;
+  var len = moveSeqs[sfg.stage.privateNo].length;
   // データ配列をもとに敵を生成
   while (this.currentIndex < len) {
-    var data = moveSeqs[stage.privateNo][this.currentIndex];
+    var data = moveSeqs[sfg.stage.privateNo][this.currentIndex];
     var nextTime = this.nextTime != null ? this.nextTime : data[0];
     if (currentTime >= (this.nextTime + data[0])) {
       var enemies = this.enemies;
@@ -503,7 +502,7 @@ Enemies.prototype.move = function () {
       }
       this.currentIndex++;
       if (this.currentIndex < len) {
-        this.nextTime = currentTime + moveSeqs[stage.privateNo][this.currentIndex][0];
+        this.nextTime = currentTime + moveSeqs[sfg.stage.privateNo][this.currentIndex][0];
       }
     } else {
       break;
@@ -513,24 +512,24 @@ Enemies.prototype.move = function () {
   if (this.homeEnemiesCount == this.totalEnemiesCount && this.status == this.START) {
     // 整列していたら整列モードに移行する。
     this.status = this.HOME;
-    this.endTime = gameTimer.elapsedTime + 1.0 * (2.0 - stage.difficulty);
+    this.endTime = sfg.gameTimer.elapsedTime + 1.0 * (2.0 - sfg.stage.difficulty);
   }
 
   // ホームポジションで一定時間待機する
   if (this.status == this.HOME) {
-    if (gameTimer.elapsedTime > this.endTime) {
+    if (sfg.gameTimer.elapsedTime > this.endTime) {
       this.status = this.ATTACK;
-      this.endTime = gameTimer.elapsedTime + (stage.DIFFICULTY_MAX - stage.difficulty) * 3;
+      this.endTime = sfg.gameTimer.elapsedTime + (sfg.stage.DIFFICULTY_MAX - sfg.stage.difficulty) * 3;
       this.group = 0;
       this.count = 0;
     }
   }
 
   // 攻撃する
-  if (this.status == this.ATTACK && gameTimer.elapsedTime > this.endTime) {
-    this.endTime = gameTimer.elapsedTime + (stage.DIFFICULTY_MAX - stage.difficulty) * 3;
+  if (this.status == this.ATTACK && sfg.gameTimer.elapsedTime > this.endTime) {
+    this.endTime = sfg.gameTimer.elapsedTime + (sfg.stage.DIFFICULTY_MAX - sfg.stage.difficulty) * 3;
     var groupData = this.groupData;
-    var attackCount = (1 + 0.25 * (stage.difficulty)) | 0;
+    var attackCount = (1 + 0.25 * (sfg.stage.difficulty)) | 0;
     var group = groupData[this.group];
 
     if (!group || group.length == 0) {
@@ -583,7 +582,7 @@ Enemies.prototype.reset = function () {
     var en = this.enemies[i];
     if (en.enable_)
     {
-      tasks.removeTask(en.task.index);
+      sfg.tasks.removeTask(en.task.index);
       en.status = en.NONE;
       en.enable_ = false;
       en.mesh.visible = false;
@@ -592,7 +591,7 @@ Enemies.prototype.reset = function () {
 }
 
 Enemies.prototype.calcEnemiesCount = function () {
-  var seqs = this.moveSeqs[stage.privateNo];
+  var seqs = this.moveSeqs[sfg.stage.privateNo];
   this.totalEnemiesCount = 0;
   for (var i = 0, end = seqs.length; i < end; ++i) {
     if (seqs[i][7]) {
@@ -675,9 +674,9 @@ Enemies.prototype.movePatterns = [
     new Goto(4)
   ],
   [ // 4
-    new CircleMove(0, -0.25 * PI, 176, 4, false),
-    new CircleMove(0.75 * PI, PI, 112, 4, true),
-    new CircleMove(PI, 3.125 * PI, 64, 4, true),
+    new CircleMove(0, -0.25 * Math.PI, 176, 4, false),
+    new CircleMove(0.75 * Math.PI, Math.PI, 112, 4, true),
+    new CircleMove(Math.PI, 3.125 * Math.PI, 64, 4, true),
     new GotoHome(),
     new HomeMove(),
     new CircleMove(0, 0.125 * Math.PI, 250, 3, true),
@@ -703,11 +702,11 @@ Enemies.prototype.movePatterns = [
     new Goto(3)
   ],
   [ // 6 ///////////////////////
-    new CircleMove(1.5 * PI, PI, 96, 4, false),
+    new CircleMove(1.5 * Math.PI, Math.PI, 96, 4, false),
 //    new LineMove(0.5 * PI,4,50),
-    new CircleMove(0, 2 * PI, 48, 4, true),
+    new CircleMove(0, 2 * Math.PI, 48, 4, true),
     //new CircleMove(0, 2 * PI, 56, 3, true),
-    new CircleMove(PI, 0.75 * PI, 32, 4, false),
+    new CircleMove(Math.PI, 0.75 * Math.PI, 32, 4, false),
   //  new CircleMove(1.5 * PI, 2 * PI, 32, 3, true),
     new GotoHome(),
     new HomeMove(),
@@ -719,11 +718,11 @@ Enemies.prototype.movePatterns = [
     new Goto(3)
   ],
   [ // 7 ///////////////////
-    new CircleMove(0, -0.25 * PI, 176, 4, false),
+    new CircleMove(0, -0.25 * Math.PI, 176, 4, false),
     new Fire(),
-    new CircleMove(0.75 * PI, PI, 112, 4, true),
-    new CircleMove(PI, 2.125 * PI, 48, 4, true),
-    new CircleMove(1.125 * PI,  PI, 48, 4, false),
+    new CircleMove(0.75 * Math.PI, Math.PI, 112, 4, true),
+    new CircleMove(Math.PI, 2.125 * Math.PI, 48, 4, true),
+    new CircleMove(1.125 * Math.PI,  Math.PI, 48, 4, false),
     new GotoHome(),
     new HomeMove(),
     new CircleMove(Math.PI, 0, 10, 3, false),

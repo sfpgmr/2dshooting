@@ -29,21 +29,13 @@ fs.readdirSync('./js').forEach((f)=>{
 });
 
 function copy(src, dest) {
-  
   return new Promise((resolve,reject)=>{
-    var r = fs.createReadStream(src).on("error",(err)=>{reject(err);}),
-        w = fs.createWriteStream(dest);
-    r.on("error", function (err) {
-        reject(err);
-    });
-    w.on("error", function (err) {
-        reject(err);
-    });
-    w.on("close", function (ex) {
-        resolve();
-    });
+    var r = fs.createReadStream(src)
+            .on("error",(err)=>{reject(err);}),
+        w = fs.createWriteStream(dest)
+            .on("error",(err)=>{reject(err);})
+            .on("close",()=>{resolve();});
     r.pipe(w);
-    
   });
 
 }

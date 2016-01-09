@@ -1,35 +1,30 @@
-/// <reference path="./dsp.js" />
-/// <reference path="graphics.js" />
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="audio.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="gameobj.js" />
-/// <reference path="enemies.js" />
-/// <reference path="effectobj.js" />
-/// <reference path="myship.js" />
-/// <reference path="comm.js" />
-
-var CONSOLE_WIDTH = 480.0;
-var CONSOLE_HEIGHT = 640.0;
-var VIRTUAL_WIDTH = CONSOLE_WIDTH / 2.0;
-var VIRTUAL_HEIGHT = CONSOLE_HEIGHT / 2.0;
-var V_RIGHT = VIRTUAL_WIDTH / 2.0;
-var V_TOP = VIRTUAL_HEIGHT / 2.0;
-var V_LEFT = -1 * VIRTUAL_WIDTH / 2.0;
-var V_BOTTOM = -1 * VIRTUAL_HEIGHT / 2.0;
-
-var CHAR_SIZE = 8;
-var TEXT_WIDTH = VIRTUAL_WIDTH / CHAR_SIZE;
-var TEXT_HEIGHT = VIRTUAL_HEIGHT / CHAR_SIZE;
-var PIXEL_SIZE = 1;
-var ACTUAL_CHAR_SIZE = CHAR_SIZE * PIXEL_SIZE;
-var SPRITE_SIZE_X = 16.0;
-var SPRITE_SIZE_Y = 16.0;
-var CHECK_COLLISION = true;
+"use strict";
 //var STAGE_MAX = 1;
+import * as sfg from './global'; 
+import * as util from './util';
+import * as audio from './audio';
+//import * as song from './song';
+import * as graphics from './graphics';
+import * as io from './io';
+import * as comm from './comm';
+import * as text from './text';
+import * as gameobj from './gameobj';
+import * as myship from './myship';
+import * as enemies from './enemies';
+import * as effectobj from './effectobj';
 
+export function calcScreenSize() {
+    CONSOLE_WIDTH = window.innerWidth;
+    CONSOLE_HEIGHT = window.innerHeight;
+    if (CONSOLE_WIDTH >= CONSOLE_HEIGHT) {
+        CONSOLE_WIDTH = CONSOLE_HEIGHT * sfg.VIRTUAL_WIDTH / sfg.VIRTUAL_HEIGHT;
+    } else {
+        CONSOLE_HEIGHT = CONSOLE_WIDTH * sfg.VIRTUAL_HEIGHT / sfg.VIRTUAL_WIDTH;
+    }
+}
+
+var CONSOLE_WIDTH;
+var CONSOLE_HEIGHT;
 
 var renderer;
 var stats;
@@ -38,56 +33,54 @@ var camera;
 var author;
 var progress;
 var textPlane;
-var basicInput = new BasicInput();
-var tasks = new Tasks();
+var basicInput = new io.BasicInput();
+var tasks = new util.Tasks();
+sfg.tasks = tasks;
 var waveGraph;
 var start = false;
 var baseTime = +new Date;
 var d = -0.2;
-var audio;
+var audio_;
 var sequencer;
 var piano;
 var score = 0;
 var highScore = 0;
 var highScores = [];
-var myShip;
-var gameTimer;
 var isHidden = false;
 //var stageNo = 1;
-var stage;
+//var sfg.stage;
 //var stageState = ;
-var bombs;
-var enemies;
+var enemies_;
 var enemyBullets;
 var PI = Math.PI;
-var comm;
+var comm_;
 var handleName = '';
 var storage;
 var rank = -1;
+var soundEffects;
+var ens;
+var enbs;
 
 function ScoreEntry(name, score) {
   this.name = name;
   this.score = score;
 }
 
-function Stage()
-{
-}
 
-Stage.prototype = {
-  MAX: 1,
-  DIFFICULTY_MAX:2.0,
-  no: 1,
-  privateNo: 0,
-  difficulty: 1,
-  reset:function()
-  {
+class Stage {
+  constructor(){
+    this.MAX = 1;
+    this.DIFFICULTY_MAX = 2.0;
     this.no = 1;
     this.privateNo = 0;
     this.difficulty = 1;
-  },
-  advance:function()
-  {
+  }
+  reset(){
+    this.no = 1;
+    this.privateNo = 0;
+    this.difficulty = 1;
+  }
+  advance(){
     this.no++;
     this.privateNo++;
 
@@ -100,7 +93,6 @@ Stage.prototype = {
     }
   }
 }
-
 
 // hidden プロパティおよび可視性の変更イベントの名前を設定
 var hidden, visibilityChange;
@@ -118,68 +110,64 @@ if (typeof document.hidden !== "undefined") { // Opera 12.10 や Firefox 18 以�
   visibilityChange = "webkitvisibilitychange";
 }
 
-
-/// 現在時間の取得
-function getCurrentTime() {
-  return audio.audioctx.currentTime;
-}
 /// ブラウザの機能チェック
 function checkBrowserSupport(output) {
   var content = '<img class="errorimg" src="http://public.blu.livefilestore.com/y2pbY3aqBz6wz4ah87RXEVk5ClhD2LujC5Ns66HKvR89ajrFdLM0TxFerYYURt83c_bg35HSkqc3E8GxaFD8-X94MLsFV5GU6BYp195IvegevQ/20131001.png?psid=1" width="479" height="640" class="alignnone" />';
   // WebGLのサポートチェック
   if (!Detector.webgl) {
-    $('<div>').appendTo('#content').addClass('error').append(
+    d3.select('#content').append('div').classed('error',true).html(
       content + '<p class="errortext">ブラウザが<br/>WebGLをサポートしていないため<br/>動作いたしません。</p>');
     return false;
   }
 
   // Web Audio APIラッパー
-  if (!audio.enable) {
-    $('<div>').appendTo('#content').addClass('error').append(
+  if (!audio_.enable) {
+    d3.select('#content').append('div').classed('error',true).html(
       content + '<p class="errortext">ブラウザが<br/>Web Audio APIをサポートしていないため<br/>動作いたしません。</p>');
     return false;
   }
 
   // ブラウザがPage Visibility API をサポートしない場合に警告 
   if (typeof hidden === 'undefined') {
-    $('<div>').appendTo('#content').addClass('error').append(
+    d3.select('#content').append('div').classed('error',true).html(
       content + '<p class="errortext">ブラウザが<br/>Page Visibility APIをサポートしていないため<br/>動作いたしません。</p>');
     return false;
   }
 
   if (typeof localStorage === 'undefined') {
-    $('<div>').appendTo('#content').addClass('error').append(
+    d3.select('#content').append('div').classed('error',true).html(
       content + '<p class="errortext">ブラウザが<br/>Web Local Storageをサポートしていないため<br/>動作いたしません。</p>');
     return false;
   } else {
     storage = localStorage;
   }
-
-
   return true;
-
 }
 
 /// コンソール画面の初期化
 function initConsole() {
   // レンダラーの作成
   renderer = new THREE.WebGLRenderer({ antialias: false,sortObjects: true });
+  calcScreenSize();
   renderer.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
   renderer.setClearColor(0,1);
   renderer.domElement.id = 'console';
   renderer.domElement.className = 'console';
   renderer.domElement.style.zIndex = 0;
 
-  $('#content').append(renderer.domElement);
+  d3.select('#content').node().appendChild(renderer.domElement);
 
-
+  window.addEventListener('resize', function () {
+      calcScreenSize();
+      renderer.setSize(CONSOLE_WIDTH, CONSOLE_HEIGHT);
+  });
   // Stats オブジェクト(FPS表示)の作成表示
   stats = new Stats();
   stats.domElement.style.position = 'absolute';
   stats.domElement.style.top = '0px';
 
 
-  $('#content').append(stats.domElement);
+   d3.select('#content').node().appendChild(stats.domElement);
   stats.domElement.style.left = renderer.domElement.clientWidth - stats.domElement.clientWidth + 'px';
 
   //2D描画コンテキストの表示
@@ -194,8 +182,8 @@ function initConsole() {
   scene = new THREE.Scene();
 
   // カメラの作成
-  camera = new THREE.PerspectiveCamera(90.0, CONSOLE_WIDTH / CONSOLE_HEIGHT);
-  camera.position.z = CONSOLE_HEIGHT / 4;
+  camera = new THREE.PerspectiveCamera(90.0, sfg.VIRTUAL_WIDTH / sfg.VIRTUAL_HEIGHT);
+  camera.position.z = sfg.VIRTUAL_HEIGHT / 2;
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   //var camera = new THREE.Camera();
@@ -209,49 +197,6 @@ function initConsole() {
   //var ambient = new THREE.AmbientLight(0xffffff);
   //scene.add(ambient);
   renderer.clear();
-  // 開始・停止ボタンの設定 //
-
-  $('#Start').click(function () {
-    if (!start) {
-      start = true;
-      $('#Start').text('Stop');
-      tasks.clear();
-      tasks.pushTask(init);
-      tasks.pushTask(render,100000);
-      game();
-    } else {
-      start = false;
-      $('#Start').text('Start');
-      audio.stop();
-      sequencer.stop();
-      comm.disconnect();
-    }
-  });
-
-  // ソースコード表示ボタンの設定 //
-
-  $('#Show-Code').click(function () {
-    var code = $('#source-code');
-    if (code.css('display') == 'none') {
-      code.css('display', 'block');
-      $('#Show-Code').text('ソース非表示');
-    } else {
-      code.css('display', 'none');
-      $('#Show-Code').text('ソース表示');
-    }
-
-  });
-
-  // 表示エリアの調整 //
-
-  $('#content').height($('#console').height());
-  $('#content').width($('#console').width());
-  /*      $('#info-display').height($('#console').height());
-        $('#info-display').width($('#console').width());*/
-  $('#source-code').width($('#content').width());
-  $('#source-code').height($('#content').height());
-  $('#source-code').css('top', $('#navigation').height() + 'px');
-
 }
 
 /// エラーで終了する。
@@ -270,19 +215,19 @@ function onVisibilityChange()
   var h = document[hidden];
   isHidden = h;
   if (h) {
-    if(gameTimer.status == gameTimer.START)
+    if(sfg.gameTimer.status == sfg.gameTimer.START)
     {
-      gameTimer.pause();
-      console.log(gameTimer.elapsedTime);
+      sfg.gameTimer.pause();
+      console.log(sfg.gameTimer.elapsedTime);
     }
     if (sequencer.status == sequencer.PLAY) {
       sequencer.pause();
     }
     //document.title = '(Pause) Galaxy Fight Game ';
   } else {
-    if (gameTimer.status == gameTimer.PAUSE) {
-      gameTimer.resume();
-      console.log(gameTimer.elapsedTime);
+    if (sfg.gameTimer.status == sfg.gameTimer.PAUSE) {
+      sfg.gameTimer.resume();
+      console.log(sfg.gameTimer.elapsedTime);
     }
     if (sequencer.status == sequencer.PAUSE) {
       sequencer.resume();
@@ -291,76 +236,120 @@ function onVisibilityChange()
     //game();
   }
 }
+/// 現在時間の取得
+function getCurrentTime() {
+  return audio_.audioctx.currentTime;
+}
+
 
 /// メイン
-$(window).ready(function () {
+window.onload = function () {
 
-
-  $('#Start')[0].disabled = true;
-
-  audio = new Audio();
+  audio_ = new audio.Audio();
 
   if (!checkBrowserSupport('#content')) {
     return;
   }
 
-  sequencer = new Sequencer();
-  piano = new Piano();
-  soundEffects = new SoundEffects();
-
+  sequencer = new audio.Sequencer(audio_);
+  //piano = new audio.Piano(audio_);
+  soundEffects = new audio.SoundEffects(sequencer);
 
   document.addEventListener(visibilityChange, onVisibilityChange, false);
-
-  /// ゲーム中のテクスチャー定義
-  textureFiles = {
-    loadCompletedCount: 0,
-    totalTextureCount: 0,
-    isLoadComplete: function () { return loadCompletedCount == totalTextureCount; },
-     font: (new TextureFile('Font.png', textureFiles)),
-     font1: (new TextureFile('Font2.png', textureFiles)),
-    author: (new TextureFile('author.png', textureFiles)),
-    title: (new TextureFile('TITLE.png', textureFiles)),
-    myship: (new TextureFile('myship2.png', textureFiles)),
-    enemy: (new TextureFile('enemy.png', textureFiles)),
-    bomb: (new TextureFile('bomb.png',textureFiles))
-  };
-
-
-  /// ソースコード表示の準備
-  $('#source-code').text($('html').html());
-
-  gameTimer = new GameTimer();
+  sfg.gameTimer = new util.GameTimer(getCurrentTime);
 
   /// ゲームコンソールの初期化
   initConsole();
   // キー入力処理の設定 //
-  $(document).keydown(function (e) { return basicInput.keydown(e); });
-  $(document).keyup(function (e) { return basicInput.keyup(e); });
+  //d3.select('body').on('keydown',function () { return basicInput.keydown(d3.event); });
+  //d3.select('body').on('keyup',function () { return basicInput.keyup(d3.event); });
 
-  /// リソースロードを待つ
-  (function () {
-    progress = new Progress();
-    progress.mesh.position.z = 0.001;
-    progress.render('Loading Resouces ...', 0);
-    scene.add(progress.mesh);
-    function loadResouces() {
-      renderer.render(scene, camera);
-      if (textureFiles.loadCompletedCount == textureFiles.totalTextureCount)
-      {
-        scene.remove(progress.mesh);
-        //progress.render('Loading Complete.', 100);
-        renderer.render(scene, camera);
-        $('#Start')[0].disabled = false;
-      } else {
-        progress.render('Loading Resouces ...', (textureFiles.loadCompletedCount / textureFiles.totalTextureCount * 100) | 0);
-        window.setTimeout(loadResources, 100);
-      }
-    }
-    loadResouces();
+  /// ゲーム中のテクスチャー定義
+  var textures = {
+    font: 'Font.png',
+    font1:'Font2.png',
+    author:'author.png',
+    title: 'TITLE.png',
+    myship:'myship2.png',
+    enemy:'enemy.png',
+    bomb:'bomb.png'
+  };
+  /// テクスチャーのロード
+  
+  var loadPromise = Promise.resolve();
+  var loader = new THREE.TextureLoader();
+  function loadTexture(src)
+  {
+    return new Promise((resolve,reject)=>{
+      loader.load(src,(texture)=>{
+        resolve(texture);
+      },null,(xhr)=>{reject(xhr)});
+    });
   }
-  )();
+  
+  var texLength = Object.keys(textures).length;
+  var texCount = 0; 
+  progress = new graphics.Progress();
+  progress.mesh.position.z = 0.001;
+  progress.render('Loading Resouces ...', 0);
+  scene.add(progress.mesh);
+  for(var n in textures){
+    ((name,texPath)=>{
+      loadPromise = loadPromise
+      .then(()=>{
+        return loadTexture('./res/' + texPath);      
+      })
+      .then((tex)=>{
+        texCount++;
+        progress.render('Loading Resouces ...', (texCount / texLength * 100) | 0);        
+        sfg.textureFiles[name] = tex;
+        renderer.render(scene, camera);
+        return Promise.resolve();
+      });
+    })(n,textures[n]);
+  }
+  
+  loadPromise.then(()=>{
+    scene.remove(progress.mesh);
+    renderer.render(scene, camera);
+    tasks.clear();
+    tasks.pushTask(init);
+    tasks.pushTask(render,100000);
+    start = true;
+    game();
+  });
+  
+  // var texLoader = function(src){
+  //   return new Promise(function(resolve,reject){
+  //     
+  //   });
+  // }
+  // for(var p in textures){
+  //   v
+  // }
+  
+  // (function () {
+  //   progress = new graphics.Progress();
+  //   progress.mesh.position.z = 0.001;
+  //   progress.render('Loading Resouces ...', 0);
+  //   scene.add(progress.mesh);
+  //   function loadResouces() {
+  //     renderer.render(scene, camera);
+  //     if (sfg.textureFiles.loadCompletedCount == sfg.textureFiles.totalTextureCount)
+  //     {
+  //       scene.remove(progress.mesh);
+  //       //progress.render('Loading Complete.', 100);
+  //     } else {
+  //       progress.render('Loading Resouces ...', (textureFiles.loadCompletedCount / textureFiles.totalTextureCount * 100) | 0);
+  //       window.setTimeout(loadResources, 100);
+  //     }
+  //   }
+  //   loadResouces();
+  // }
+  // )();
 
-});
+
+};
 
 /// ゲームメイン
 function game() {
@@ -376,7 +365,7 @@ function game() {
         var arr = tasks.getArray();
         for (var i = 0 ; i < arr.length; ++i) {
           var task = arr[i];
-          if (task != nullTask) {
+          if (task != util.nullTask) {
             task.func(task.index);
           }
         }
@@ -396,33 +385,46 @@ function render(taskIndex) {
 function init(taskIndex) {
 
   scene = new THREE.Scene();
-  enemies = new Enemies();
-  enemyBullets = new EnemyBullets();
-  bombs = new Bombs();
-  stage = new Stage();
+  enemyBullets = new enemies.EnemyBullets(scene,se);
+  enemies_ = new enemies.Enemies(scene,se,enemyBullets);
+  sfg.bombs = new effectobj.Bombs(scene,se);
+  sfg.stage = new Stage();
   spaceField = null;
 
   // ハンドルネームの取得
   handleName = storage.getItem('handleName') ;
 
-  textPlane = new TextPlane();
+  textPlane = new text.TextPlane(scene);
  // textPlane.print(0, 0, "Web Audio API Test", new TextAttribute(true));
  // スコア情報 通信用
-  comm = new Comm();
+  comm_ = new comm.Comm();
+  comm_.updateHighScores = (data)=>
+  {
+    highScores = data;
+    highScore = highScores[0].score;
+  };
+  
+  comm_.updateHighScore = (data)=>
+  {
+    if (highScore < data.score) {
+      highScore = data.score;
+      printScore();
+    }
+  };
 
-  scene.add(textPlane.mesh);
 
+ // scene.add(textPlane.mesh);
 
   //作者名パーティクルを作成
   {
-    var canvas = $('<canvas>')[0];
-    //$('body').append(canvas);
-    var w = textureFiles.author.texture.image.width;
-    var h = textureFiles.author.texture.image.height;
+    var canvas = document.createElement('canvas');
+
+    var w = sfg.textureFiles.author.image.width;
+    var h = sfg.textureFiles.author.image.height;
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
-    ctx.drawImage(textureFiles.author.texture.image, 0, 0);
+    ctx.drawImage(sfg.textureFiles.author.image, 0, 0);
     var data = ctx.getImageData(0, 0, w, h);
     var geometry = new THREE.Geometry();
 
@@ -455,13 +457,13 @@ function init(taskIndex) {
 
     // マテリアルを作成
     //var texture = THREE.ImageUtils.loadTexture('images/particle1.png');
-    var material = new THREE.ParticleBasicMaterial({
+    var material = new THREE.PointsMaterial({
       size: 20, blending: THREE.AdditiveBlending,
       transparent: true, vertexColors: true, depthTest: false//, map: texture
     });
 
-    author = new THREE.ParticleSystem(geometry, material);
-    author.position = new THREE.Vector3(0.0, 0.0, 0.0);
+    author = new THREE.Points(geometry, material);
+//    author.position.x author.position.y=  =0.0, 0.0, 0.0);
 
     //mesh.sortParticles = false;
     //var mesh1 = new THREE.ParticleSystem();
@@ -577,14 +579,14 @@ function initTitle(taskIndex) {
   basicInput.clear();
 
   // タイトルメッシュの作成・表示 ///
-  var material = new THREE.MeshBasicMaterial({ map: textureFiles.title.texture });
+  var material = new THREE.MeshBasicMaterial({ map: sfg.textureFiles.title });
   material.shading = THREE.FlatShading;
   //material.antialias = false;
   material.transparent = true;
   material.alphaTest = 0.5;
   material.depthTest = true;
   title = new THREE.Mesh(
-    new THREE.PlaneGeometry(textureFiles.title.texture.image.width, textureFiles.title.texture.image.height),
+    new THREE.PlaneGeometry(sfg.textureFiles.title.image.width, sfg.textureFiles.title.image.height),
     material
     );
   title.scale.x = title.scale.y = 0.8;
@@ -600,8 +602,8 @@ function initTitle(taskIndex) {
       var color = new THREE.Color();
       var z = -1000.0 * Math.random() - 100.0;
       color.setHSL(0.05 + Math.random() * 0.05, 1.0, (-1100 - z) / -1100);
-      var endy = VIRTUAL_HEIGHT / 2 - z * CONSOLE_HEIGHT / CONSOLE_WIDTH;
-      var vert2 = new THREE.Vector3((VIRTUAL_WIDTH - z * 2) * Math.random() - ((VIRTUAL_WIDTH - z * 2) / 2)
+      var endy = sfg.VIRTUAL_HEIGHT / 2 - z * sfg.VIRTUAL_HEIGHT / sfg.VIRTUAL_WIDTH;
+      var vert2 = new THREE.Vector3((sfg.VIRTUAL_WIDTH - z * 2) * Math.random() - ((sfg.VIRTUAL_WIDTH - z * 2) / 2)
         , endy * 2 * Math.random() - endy, z);
       geometry.vertices.push(vert2);
       geometry.endy.push(endy);
@@ -616,16 +618,16 @@ function initTitle(taskIndex) {
       transparent: true, vertexColors: true, depthTest: true//, map: texture
     });
 
-    spaceField = new THREE.ParticleSystem(geometry, material);
-    spaceField.position = new THREE.Vector3(0.0, 0.0, 0.0);
+    spaceField = new THREE.Points(geometry, material);
+    spaceField.position.x = spaceField.position.y = spaceField.position.z = 0.0;
     scene.add(spaceField);
     tasks.pushTask(moveSpaceField);
   }
 
-  /// テキスト表示
-    textPlane.print(3, 25, "Push z key to Start Game", new TextAttribute(true));
-    gameTimer.start();
-    showTitle.endTime = gameTimer.elapsedTime + 10/*秒*/;
+    /// テキスト表示
+    textPlane.print(3, 25, "Push z key to Start Game", new text.TextAttribute(true));
+    sfg.gameTimer.start();
+    showTitle.endTime = sfg.gameTimer.elapsedTime + 10/*秒*/;
     tasks.setNextTask(taskIndex, showTitle);
 }
 
@@ -645,13 +647,13 @@ function moveSpaceField(taskIndex)
 
 /// タイトル表示
 function showTitle(taskIndex) {
-  gameTimer.update();
+  sfg.gameTimer.update();
 
   if (basicInput.keyCheck.z) {
     scene.remove(title);
     tasks.setNextTask(taskIndex, initHandleName);
   }
-  if (showTitle.endTime < gameTimer.elapsedTime) {
+  if (showTitle.endTime < sfg.gameTimer.elapsedTime) {
     scene.remove(title);
     tasks.setNextTask(taskIndex, initTop10);
   }
@@ -672,56 +674,40 @@ function initHandleName(taskIndex)
     textPlane.print(10, 21, editHandleName);
     //    textPlane.print(10, 21, handleName[0], TextAttribute(true));
     basicInput.unbind();
-    var elm = $('<input>');
+    var elm = d3.select('#content').append('input');
     elm
       .attr('type', 'text')
       .attr('pattern', '[a-zA-Z0-9_\@\#\$\-]{0,8}')
       .attr('maxlength', 8)
       .attr('id','input-area')
-      .val(editHandleName)
-      .focusout(function (e) {
-        var obj = $(this);
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        setTimeout(function () { obj.focus();}, 10);
+      .attr('value',editHandleName)
+      .on('blur',function(){
+        d3.event.preventDefault();
+        d3.event.stopImmediatePropagation();
+        setTimeout(function () { this.focus();}, 10);
         return false;
       })
-      .keyup(function (e) {
-        if (e.which == 13) {
+      .on('keyup',function (e) {
+        if (d3.event.keyCode == 13) {
           editHandleName = this.value;
           var s = this.selectionStart;
           var e = this.selectionEnd;
           textPlane.print(10, 21, editHandleName);
-          textPlane.print(10 + s, 21, '_', TextAttribute(true));
-          $(this).unbind('keyup');
+          textPlane.print(10 + s, 21, '_', new text.TextAttribute(true));
+          d3.select(this).on('keyup',null);
           basicInput.bind();
           tasks.setNextTask(taskIndex, gameInit);
           storage.setItem('handleName', editHandleName);
-          $('#input-area').remove();
+          d3.select('#input-area').remove();
           return false;
         }
         editHandleName = this.value;
         var s = this.selectionStart;
         textPlane.print(10, 21, '           ');
         textPlane.print(10, 21, editHandleName);
-        textPlane.print(10 + s, 21,'_', new TextAttribute(true));
+        textPlane.print(10 + s, 21,'_', new text.TextAttribute(true));
       })
-    .appendTo('#content')
-/*    .change(function () {
-      editHandleName = this.value;
-      var s = this.selectionStart;
-      var e = this.selectionEnd;
-      textPlane.print(10, 21, editHandleName);
-      textPlane.print(10 + s, 21, '_', TextAttribute(true));
-      $(this).unbind('keyup');
-      $(document).keydown(function (e) { return basicInput.keydown(e); });
-      $(document).keyup(function (e) { return basicInput.keyup(e); });
-      tasks.setNextTask(taskIndex, gameInit);
-      storage.setItem('handleName',editHandleName);
-      $('#input-area').remove();
-      return true;
-    })*/
-    .focus();
+    .node().focus();
     tasks.setNextTask(taskIndex, inputHandleName);
   }
 }
@@ -739,6 +725,9 @@ function addScore(s) {
     highScore = score;
   }
 }
+
+sfg.addScore = addScore;
+
 /// スコア表示
 function printScore()
 {
@@ -753,50 +742,54 @@ function printScore()
 
 }
 
+function se(index){
+  sequencer.playTracks(soundEffects.soundEffects[index]);
+}
+
 /// ハイスコア表示
 
 /// ゲームの初期化
 function gameInit(taskIndex) {
 
   // オーディオの開始
-  audio.start();
-  sequencer.load(seqData);
+  audio_.start();
+  sequencer.load(audio.seqData);
   sequencer.start();
-  stage.reset();
+  sfg.stage.reset();
   textPlane.cls();
 
-  enemies.reset();
+  enemies_.reset();
 
   // 自機の初期化
-  myShip = new MyShip(0, -100, 0.1);
-  gameTimer.start();
+  sfg.myship_ = new myship.MyShip(0, -100, 0.1,scene,se);
+  sfg.gameTimer.start();
   score = 0;
   textPlane.print(2, 0, 'Score    High Score');
-  textPlane.print(20, 39, 'Rest:   ' + myShip.rest);
+  textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
   printScore();
   tasks.setNextTask(taskIndex, stageInit/*gameAction*/);
 }
 
 /// ステージの初期化
 function stageInit(taskIndex) {
-  textPlane.print(0, 39, 'Stage:' + stage.no);
-  gameTimer.start();
-  enemies.reset();
-  enemies.start();
-  enemies.calcEnemiesCount(stage.privateNo);
-  enemies.hitEnemiesCount = 0;
-  textPlane.print(8, 15, 'Stage ' + (stage.no) + ' Start !!', new TextAttribute(true));
-  stageStart.endTime = gameTimer.elapsedTime + 2;
+  textPlane.print(0, 39, 'Stage:' + sfg.stage.no);
+  sfg.gameTimer.start();
+  enemies_.reset();
+  enemies_.start();
+  enemies_.calcEnemiesCount(sfg.stage.privateNo);
+  enemies_.hitEnemiesCount = 0;
+  textPlane.print(8, 15, 'Stage ' + (sfg.stage.no) + ' Start !!', new text.TextAttribute(true));
+  stageStart.endTime = sfg.gameTimer.elapsedTime + 2;
   tasks.setNextTask(taskIndex, stageStart/*gameAction*/);
 }
 
 /// ステージ開始
 function stageStart(taskIndex)
 {
-  gameTimer.update();
-  myShip.action();
-  if (stageStart.endTime < gameTimer.elapsedTime) {
-    textPlane.print(8, 15, '                  ', new TextAttribute(true));
+  sfg.gameTimer.update();
+  sfg.myship_.action(basicInput);
+  if (stageStart.endTime < sfg.gameTimer.elapsedTime) {
+    textPlane.print(8, 15, '                  ', new text.TextAttribute(true));
     tasks.setNextTask(taskIndex, gameAction,5000);
   }
 }
@@ -804,19 +797,19 @@ function stageStart(taskIndex)
 /// 自機の動きを制御する
 function gameAction(taskIndex) {
   printScore();
-  myShip.action();
-  gameTimer.update();
-  //console.log(gameTimer.elapsedTime);
-  enemies.move();
+  sfg.myship_.action(basicInput);
+  sfg.gameTimer.update();
+  //console.log(sfg.gameTimer.elapsedTime);
+  enemies_.move();
 
   if (!processCollision()) {
-    if (enemies.hitEnemiesCount == enemies.totalEnemiesCount) {
+    if (enemies_.hitEnemiesCount == enemies_.totalEnemiesCount) {
       printScore();
-      stage.advance();
+      sfg.stage.advance();
       tasks.setNextTask(taskIndex, stageInit);
     }
   } else {
-    myShipBomb.endTime = gameTimer.elapsedTime + 3;
+    myShipBomb.endTime = sfg.gameTimer.elapsedTime + 3;
     tasks.setNextTask(taskIndex, myShipBomb);
   };
 
@@ -826,8 +819,8 @@ function gameAction(taskIndex) {
 function processCollision(taskIndex)
 {
   //　自機弾と敵とのあたり判定
-  var myBullets = myShip.myBullets;
-  ens = enemies.enemies;
+  var myBullets = sfg.myship_.myBullets;
+  ens = enemies_.enemies;
   for (var i = 0, end = myBullets.length; i < end; ++i) {
     var myb = myBullets[i];
     if (myb.enable_) {
@@ -855,12 +848,12 @@ function processCollision(taskIndex)
   }
 
   // 敵と自機とのあたり判定
-  if(CHECK_COLLISION){
-    var myco = myShip.collisionArea;
-    var left = myShip.x + myco.left;
-    var right = myco.right + myShip.x;
-    var top = myco.top + myShip.y;
-    var bottom = myco.bottom + myShip.y;
+  if(sfg.CHECK_COLLISION){
+    var myco = sfg.myship_.collisionArea;
+    var left = sfg.myship_.x + myco.left;
+    var right = myco.right + sfg.myship_.x;
+    var top = myco.top + sfg.myship_.y;
+    var bottom = myco.bottom + sfg.myship_.y;
 
     for (var i = 0, end = ens.length; i < end; ++i) {
       var en = ens[i];
@@ -872,7 +865,7 @@ function processCollision(taskIndex)
           (en.x + enco.left) < right
           ) {
           en.hit();
-          myShip.hit();
+          sfg.myship_.hit();
           return true;
         }
       }
@@ -889,7 +882,7 @@ function processCollision(taskIndex)
           (en.x + enco.left) < right
           ) {
           en.hit();
-          myShip.hit();
+          sfg.myship_.hit();
           return true;
         }
       }
@@ -901,24 +894,24 @@ function processCollision(taskIndex)
 
 /// 自機爆発 
 function myShipBomb(taskIndex) {
-  gameTimer.update();
-  enemies.move();
-  if (gameTimer.elapsedTime > myShipBomb.endTime) {
-    myShip.rest--;
-    if (myShip.rest == 0) {
-      textPlane.print(10, 18, 'GAME OVER', new TextAttribute(true));
+  sfg.gameTimer.update();
+  enemies_.move();
+  if (sfg.gameTimer.elapsedTime > myShipBomb.endTime) {
+    sfg.myship_.rest--;
+    if (sfg.myship_.rest == 0) {
+      textPlane.print(10, 18, 'GAME OVER', new text.TextAttribute(true));
       printScore();
-      textPlane.print(20, 39, 'Rest:   ' + myShip.rest);
-      comm.socket.on('sendRank', checkRankIn);
-      comm.sendScore(new ScoreEntry(editHandleName,score));
-      gameOver.endTime = gameTimer.elapsedTime + 5;
+      textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
+      comm_.socket.on('sendRank', checkRankIn);
+      comm_.sendScore(new ScoreEntry(editHandleName,score));
+      gameOver.endTime = sfg.gameTimer.elapsedTime + 5;
       rank = -1;
       tasks.setNextTask(taskIndex, gameOver);
     } else {
-      myShip.mesh.visible = true;
-      textPlane.print(20, 39, 'Rest:   ' + myShip.rest);
-      textPlane.print(8, 15, 'Stage ' + (stage.no) + ' Start !!', new TextAttribute(true));
-      stageStart.endTime = gameTimer.elapsedTime + 2;
+      sfg.myship_.mesh.visible = true;
+      textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
+      textPlane.print(8, 15, 'Stage ' + (sfg.stage.no) + ' Start !!', new text.TextAttribute(true));
+      stageStart.endTime = sfg.gameTimer.elapsedTime + 2;
       tasks.setNextTask(taskIndex, stageStart/*gameAction*/);
     }
   }
@@ -928,10 +921,10 @@ function myShipBomb(taskIndex) {
 /// ゲームオーバー
 function gameOver(taskIndex)
 {
-  gameTimer.update();
-  if (gameOver.endTime < gameTimer.elapsedTime) {
+  sfg.gameTimer.update();
+  if (gameOver.endTime < sfg.gameTimer.elapsedTime) {
     textPlane.cls();
-    enemies.reset();
+    enemies_.reset();
     enemyBullets.reset();
     if (rank >= 0) {
       tasks.setNextTask(taskIndex, initTop10);
@@ -958,7 +951,7 @@ function printTop10()
     var scoreStr = '00000000' + highScores[i].score;
     scoreStr = scoreStr.substr(scoreStr.length - 8, 8);
     if (rank == i) {
-      textPlane.print(3, y, rankname[i] + ' ' + scoreStr + ' ' + highScores[i].name, new TextAttribute(true));
+      textPlane.print(3, y, rankname[i] + ' ' + scoreStr + ' ' + highScores[i].name, new text.TextAttribute(true));
     } else {
       textPlane.print(3, y, rankname[i] + ' ' + scoreStr + ' ' + highScores[i].name);
     }
@@ -969,13 +962,13 @@ function printTop10()
 function initTop10(taskIndex) {
   textPlane.cls();
   printTop10();
-  showTop10.endTime = gameTimer.elapsedTime + 5;
+  showTop10.endTime = sfg.gameTimer.elapsedTime + 5;
   tasks.setNextTask(taskIndex, showTop10);
 }
 
 function showTop10(taskIndex) {
-  gameTimer.update();
-  if (showTop10.endTime < gameTimer.elapsedTime || basicInput.keyBuffer.length > 0) {
+  sfg.gameTimer.update();
+  if (showTop10.endTime < sfg.gameTimer.elapsedTime || basicInput.keyBuffer.length > 0) {
     basicInput.keyBuffer.length = 0;
     textPlane.cls();
     tasks.setNextTask(taskIndex, initTitle);

@@ -1,18 +1,19 @@
 
-function Task(func,priority) {
+"use strict";
+
+export function Task(func,priority) {
   this.priority = priority || 10000;
   this.func = func;
   this.index = 0;
 }
 
-var nullTask = new Task(null);
+export var nullTask = new Task(null);
 
 /// タスク管理
-function Tasks() {
+export function Tasks() {
   this.array = new Array(0);
   this.needSort = false;
   this.needCompress = false;
-  return this;
 }
 
 
@@ -59,7 +60,7 @@ Tasks.prototype = {
       for (var i = 0, e = this.array.length; i < e; ++i) {
         this.array[i].index = i;
       }
-      needSort = false;
+     this.needSort = false;
     }
   },
   removeTask: function (index) {
@@ -88,27 +89,28 @@ Tasks.prototype = {
 
 
 /// ゲーム用タイマー
-function GameTimer() {
+export function GameTimer(getCurrentTime) {
   this.elapsedTime = 0;
   this.currentTime = 0;
   this.pauseTime = 0;
   this.status = this.STOP;
+  this.getCurrentTime = getCurrentTime;
 }
 
 GameTimer.prototype = {
   start: function () {
     this.elapsedTime = 0;
     this.deltaTime = 0;
-    this.currentTime = getCurrentTime();
+    this.currentTime = this.getCurrentTime();
     this.status = this.START;
   },
   resume: function () {
-    var nowTime = getCurrentTime();
+    var nowTime = this.getCurrentTime();
     this.currentTime = this.currentTime + nowTime - this.pauseTime;
     this.status = this.START;
   },
   pause: function () {
-    this.pauseTime = getCurrentTime();
+    this.pauseTime = this.getCurrentTime();
     this.status = this.PAUSE;
   },
   stop: function () {
@@ -116,7 +118,7 @@ GameTimer.prototype = {
   },
   update: function () {
     if (this.status != this.START) return;
-    var nowTime = getCurrentTime();
+    var nowTime = this.getCurrentTime();
     this.deltaTime = nowTime - this.currentTime;
     this.elapsedTime = this.elapsedTime + this.deltaTime;
     this.currentTime = nowTime;

@@ -1,5 +1,7 @@
+"use strict";
+
 // キー入力
-function BasicInput() {
+export function BasicInput() {
   this.keyCheck = { up: false, down: false, left: false, right: false, z: false ,x:false };
   this.keyBuffer = [];
   this.keyup_ = null;
@@ -9,14 +11,13 @@ function BasicInput() {
 BasicInput.prototype = {
   clear: function()
   {
-    var self = this;
-    $.each(this.keyCheck, function (index, value) {
-      self.keyCheck[index] = false;
-    });
+    for(var d in this.keyCheck){
+      this.keyCheck[d] = false;
+    }
     this.keyBuffer.length = 0;
   },
   keydown: function (e) {
-
+    var e = d3.event;
     var keyBuffer = this.keyBuffer;
     var keyCheck = this.keyCheck;
     var handle = true;
@@ -69,7 +70,8 @@ BasicInput.prototype = {
       return false;
     }
   },
-  keyup: function (e) {
+  keyup: function () {
+    var e = d3.event;
     var keyBuffer = this.keyBuffer;
     var keyCheck = this.keyCheck;
     var handle = false;
@@ -116,19 +118,13 @@ BasicInput.prototype = {
   //イベントにバインドする
   bind:function()
   {
-    var self = this;
-    this.keydown_ = function (e) { return self.keydown(e); };
-    this.keyup_ = function (e) { return self.keyup(e); };
-    $(document).keydown(this.keydown_);
-    $(document).keyup(this.keyup_);
+    d3.select('body').on('keydown',this.keydown.bind(this));
+    d3.select('body').on('keyup',this.keyup.bind(this));
   },
   // アンバインドする
   unbind:function()
   {
-    $(document).unbind('keydown');
-    $(document).unbind('keyup');
-
-    //if (this.keydown_ != null) { $(document).unbind('keydown', this.keydown_); }
-    //if (this.keyup_ != null) { $(document).unbind('keyup', this.keyup_); }
+    d3.select('body').on('keydown',null);
+    d3.select('body').on('keyup',null);
   }
 }

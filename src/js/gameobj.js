@@ -1,19 +1,6 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
-/// <reference path="graphics.js" />
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="audio.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="gameobj.js" />
-/// <reference path="enemies.js" />
-/// <reference path="effectobj.js" />
-/// <reference path="myship.js" />
-/// <reference path="game.js" />
+"use strict";
 
-
-function CollisionArea(offsetX, offsetY, width, height) {
+export function CollisionArea(offsetX, offsetY, width, height) {
   this.offsetX = offsetX || 0;
   this.offsetY = offsetY || 0;
   this.top = 0;
@@ -41,7 +28,7 @@ CollisionArea.prototype = {
   }
 }
 
-function GameObj(x, y, z) {
+export function GameObj(x, y, z) {
   this.x_ = x || 0;
   this.y_ = y || 0;
   this.z_ = z || 0.0;

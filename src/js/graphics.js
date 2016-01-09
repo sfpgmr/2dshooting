@@ -1,53 +1,11 @@
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="audio.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="gameobj.js" />
-/// <reference path="enemies.js" />
-/// <reference path="effectobj.js" />
-/// <reference path="myship.js" />
-/// <reference path="game.js" />
-
-
-var textureRoot = './res/';
-var textureLength = 0;
-var textureCount = 0;
-var textureFiles = new Array(0);
-
-
-function TextureFile(src, parent) {
-  this.src = src;
-  this.parent = parent;
-  parent.totalTextureCount++;
-  this.loadComplete = false;
-  this.loadError = false;
-  var self = this;
-  var loader = new THREE.TextureLoader();
-  this.texture = THREE.ImageUtils.loadTexture(textureRoot + this.src, null,
-    function (texture) {
-      self.loadComplete = true;
-      if (self.src.match(/\.png/i)) {
-        self.texture.premultiplyAlpha = true;
-      }
-      self.parent.loadCompletedCount++;
-      }
-      ,
-      function () {
-        self.loadError = true;
-      }
-    );
-  this.texture.magFilter = THREE.NearestFilter;
-  this.texture.minFilter = THREE.LinearMipMapLinearFilter;
-
-  return this;
-}
+"use strict";
+import * as g from './global';
 
 /// テクスチャーとしてcanvasを使う場合のヘルパー
-function CanvasTexture(width, height) {
-  this.canvas = $('<canvas>')[0];
-  this.canvas.width = width || CONSOLE_WIDTH;
-  this.canvas.height = height || CONSOLE_HEIGHT;
+export function CanvasTexture(width, height) {
+  this.canvas = document.createElement('canvas');
+  this.canvas.width = width || g.VIRTUAL_WIDTH;
+  this.canvas.height = height || g.VIRTUAL_HEIGHT;
   this.ctx = this.canvas.getContext('2d');
   this.texture = new THREE.Texture(this.canvas);
   this.texture.magFilter = THREE.NearestFilter;
@@ -64,10 +22,18 @@ function CanvasTexture(width, height) {
 }
 
 /// プログレスバー表示クラス
-function Progress() {
-  this.canvas = $('<canvas>')[0];
-  this.canvas.width = VIRTUAL_WIDTH;
-  this.canvas.height = VIRTUAL_HEIGHT;
+export function Progress() {
+  this.canvas = document.createElement('canvas');;
+  var width = 1;
+  while (width <= g.VIRTUAL_WIDTH){
+    width *= 2;
+  }
+  var height = 1;
+  while (height <= g.VIRTUAL_HEIGHT){
+    height *= 2;
+  }
+  this.canvas.width = width;
+  this.canvas.height = height;
   this.ctx = this.canvas.getContext('2d');
   this.texture = new THREE.Texture(this.canvas);
   this.texture.magFilter = THREE.NearestFilter;
@@ -81,6 +47,9 @@ function Progress() {
   this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
   this.geometry = new THREE.PlaneGeometry(this.canvas.width, this.canvas.height);
   this.mesh = new THREE.Mesh(this.geometry, this.material);
+  this.mesh.position.x = (width - g.VIRTUAL_WIDTH) / 2;
+  this.mesh.position.y =  - (height - g.VIRTUAL_HEIGHT) / 2;
+
   //this.texture.premultiplyAlpha = true;
 }
 
@@ -102,8 +71,8 @@ Progress.prototype.render = function (message, percent) {
 }
 
 /// imgからジオメトリを作成する
-function createGeometryFromImage(image) {
-  var canvas = $('<canvas>')[0];
+export function createGeometryFromImage(image) {
+  var canvas = document.createElement('canvas');
   var w = textureFiles.author.texture.image.width;
   var h = textureFiles.author.texture.image.height;
   canvas.width = w;
@@ -134,7 +103,7 @@ function createGeometryFromImage(image) {
   }
 }
 
-function createSpriteGeometry(size)
+export function createSpriteGeometry(size)
 {
   var geometry = new THREE.Geometry();
   var sizeHalf = size / 2;
@@ -149,7 +118,7 @@ function createSpriteGeometry(size)
 }
 
 /// テクスチャー上の指定スプライトのUV座標を求める
-function createSpriteUV(geometry, texture, cellWidth, cellHeight, cellNo)
+export function createSpriteUV(geometry, texture, cellWidth, cellHeight, cellNo)
 {
   var width = texture.image.width;
   var height = texture.image.height;
@@ -173,7 +142,7 @@ function createSpriteUV(geometry, texture, cellWidth, cellHeight, cellNo)
   ]);
 }
 
-function updateSpriteUV(geometry, texture, cellWidth, cellHeight, cellNo)
+export function updateSpriteUV(geometry, texture, cellWidth, cellHeight, cellNo)
 {
   var width = texture.image.width;
   var height = texture.image.height;
@@ -207,7 +176,7 @@ function updateSpriteUV(geometry, texture, cellWidth, cellHeight, cellNo)
 
 }
 
-function createSpriteMaterial(texture)
+export function createSpriteMaterial(texture)
 {
   // メッシュの作成・表示 ///
   var material = new THREE.MeshBasicMaterial({ map: texture /*,depthTest:true*/, transparent: true });

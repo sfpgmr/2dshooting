@@ -1,44 +1,36 @@
-/// <reference path="../../../scripts/dsp.js" />
-/// <reference path="../../../scripts/three/three.js" />
-/// <reference path="graphics.js" />
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="audio.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="gameobj.js" />
-/// <reference path="enemies.js" />
-/// <reference path="effectobj.js" />
-/// <reference path="myship.js" />
-/// <reference path="game.js" />
+"use strict";
+
+import * as sfg from './global';
+import * as gameobj from './gameobj';
+import * as graphics from './graphics';
 
 /// 自機弾 
-function MyBullet() {
-  GameObj.call(this, 0, 0, 0);
+export function MyBullet(scene,se) {
+  gameobj.GameObj.call(this, 0, 0, 0);
 
   this.collisionArea.width = 4;
   this.collisionArea.height = 6;
   this.speed = 8;
 
-  this.textureWidth = textureFiles.myship.texture.image.width;
-  this.textureHeight = textureFiles.myship.texture.image.height;
+  this.textureWidth = sfg.textureFiles.myship.image.width;
+  this.textureHeight = sfg.textureFiles.myship.image.height;
 
   // メッシュの作成・表示 ///
 
-  var material = createSpriteMaterial(textureFiles.myship.texture);
-  var geometry = createSpriteGeometry(16);
-  createSpriteUV(geometry, textureFiles.myship.texture, 16, 16, 1);
+  var material = graphics.createSpriteMaterial(sfg.textureFiles.myship);
+  var geometry = graphics.createSpriteGeometry(16);
+  graphics.createSpriteUV(geometry, sfg.textureFiles.myship, 16, 16, 1);
   this.mesh = new THREE.Mesh(geometry, material);
 
   this.mesh.position.x = this.x_;
   this.mesh.position.y = this.y_;
   this.mesh.position.z = this.z_;
-
-  sequencer.playTracks(soundEffects.soundEffects[0]);
+  this.se = se;
+  //se(0);
+  //sequencer.playTracks(soundEffects.soundEffects[0]);
   scene.add(this.mesh);
   this.mesh.visible = this.enable_ = false;
-  var self = this;
-  //  tasks.pushTask(function (taskIndex) { self.move(taskIndex); });
+  //  sfg.tasks.pushTask(function (taskIndex) { self.move(taskIndex); });
 }
 
 var myBullets = [];
@@ -53,15 +45,15 @@ MyBullet.prototype = {
   move: function (taskIndex) {
     if (!this.enable_) {
       this.mesh.visible = false;
-      tasks.removeTask(taskIndex);
+      sfg.tasks.removeTask(taskIndex);
       return;
     }
 
     this.y += this.dy;
     this.x += this.dx;
 
-    if (this.y > (V_TOP + 16) || this.y < (V_BOTTOM - 16) || this.x > (V_RIGHT + 16) || this.x < (V_LEFT - 16)) {
-      tasks.removeTask(taskIndex);
+    if (this.y > (sfg.V_TOP + 16) || this.y < (sfg.V_BOTTOM - 16) || this.x > (sfg.V_RIGHT + 16) || this.x < (sfg.V_LEFT - 16)) {
+      sfg.tasks.removeTask(taskIndex);
       this.enable_ = this.mesh.visible = false;
     };
   },
@@ -76,38 +68,41 @@ MyBullet.prototype = {
     this.dx = Math.cos(aimRadian) * this.speed;
     this.dy = Math.sin(aimRadian) * this.speed;
     this.enable_ = this.mesh.visible = true;
-    sequencer.playTracks(soundEffects.soundEffects[0]);
+    this.se(0);
+    //sequencer.playTracks(soundEffects.soundEffects[0]);
     var self = this;
-    tasks.pushTask(function (i) { self.move(i); });
+    sfg.tasks.pushTask(function (i) { self.move(i); });
     return true;
   }
 }
 
 /// 自機オブジェクト
-function MyShip(x, y, z) {
-  GameObj.call(this, x, y, z);// extend
+export function MyShip(x, y, z,scene,se) {
+  gameobj.GameObj.call(this, x, y, z);// extend
 
   this.collisionArea.width = 6;
   this.collisionArea.height = 8;
+  this.se = se;
+  this.scene = scene;
 
-  this.textureWidth = textureFiles.myship.texture.image.width;
-  this.textureHeight = textureFiles.myship.texture.image.height;
+  this.textureWidth = sfg.textureFiles.myship.image.width;
+  this.textureHeight = sfg.textureFiles.myship.image.height;
 
   this.width = 16;
   this.height = 16;
 
   // 移動範囲を求める
-  this.top = (V_TOP - this.height / 2) | 0;
-  this.bottom = (V_BOTTOM + this.height / 2) | 0;
-  this.left = (V_LEFT + this.width / 2) | 0;
-  this.right = (V_RIGHT - this.width / 2) | 0;
+  this.top = (sfg.V_TOP - this.height / 2) | 0;
+  this.bottom = (sfg.V_BOTTOM + this.height / 2) | 0;
+  this.left = (sfg.V_LEFT + this.width / 2) | 0;
+  this.right = (sfg.V_RIGHT - this.width / 2) | 0;
 
   // メッシュの作成・表示
   // マテリアルの作成
-  var material = createSpriteMaterial(textureFiles.myship.texture);
+  var material = graphics.createSpriteMaterial(sfg.textureFiles.myship);
   // ジオメトリの作成
-  var geometry = createSpriteGeometry(this.width);
-  createSpriteUV(geometry, textureFiles.myship.texture, this.width, this.height, 0);
+  var geometry = graphics.createSpriteGeometry(this.width);
+  graphics.createSpriteUV(geometry, sfg.textureFiles.myship, this.width, this.height, 0);
 
   this.mesh = new THREE.Mesh(geometry, material);
 
@@ -115,10 +110,10 @@ function MyShip(x, y, z) {
   this.mesh.position.y = this.y_;
   this.mesh.position.z = this.z_;
   this.rest = 3;
-  this.myBullets = (function () {
+  this.myBullets = ( ()=> {
     var arr = [];
     for (var i = 0; i < 2; ++i) {
-      arr.push(new MyBullet());
+      arr.push(new MyBullet(this.scene,this.se));
     }
     return arr;
   })();
@@ -142,7 +137,7 @@ MyShip.prototype = {
       }
     }
   },
-  action: function () {
+  action: function (basicInput) {
     if (basicInput.keyCheck.left) {
       if (this.x > this.left) {
         this.x -= 2;
@@ -170,18 +165,18 @@ MyShip.prototype = {
 
     if (basicInput.keyCheck.z) {
       basicInput.keyCheck.z = false;
-      myShip.shoot(0.5 * Math.PI);
+      this.shoot(0.5 * Math.PI);
     }
 
     if (basicInput.keyCheck.x) {
       basicInput.keyCheck.x = false;
-      myShip.shoot(1.5 * Math.PI);
+      this.shoot(1.5 * Math.PI);
     }
   },
   hit: function () {
     this.mesh.visible = false;
-    bombs.start(myShip.x, myShip.y, 0.2);
-    sequencer.playTracks(soundEffects.soundEffects[4]);
+    sfg.bombs.start(this.x, this.y, 0.2);
+    this.se(4);
   }
 
 }

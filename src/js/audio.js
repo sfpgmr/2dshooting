@@ -3,14 +3,14 @@
 /// <reference path="song.js" />
 /// <reference path="text.js" />
 /// <reference path="util.js" />
-/// <reference path="../../../../scripts/dsp.js" />
-
+/// <reference path="dsp.js" />
+"use strict";
 //// Web Audio API ラッパークラス ////
 var fft = new FFT(4096, 44100);
 var BUFFER_SIZE = 1024;
 var TIME_BASE = 96;
 
-noteFreq = [];
+var noteFreq = [];
 for (var i = -81; i < 46; ++i) {
   noteFreq.push(Math.pow(2, i / 12));
 }
@@ -30,7 +30,7 @@ var TriWave = {
   wavedata: [0x0, 0x2, 0x4, 0x6, 0x8, 0xA, 0xC, 0xE, 0xF, 0xE, 0xC, 0xA, 0x8, 0x6, 0x4, 0x2]
 };
 
-function decodeStr(bits, wavestr) {
+export function decodeStr(bits, wavestr) {
   var arr = [];
   var n = bits / 4 | 0;
   var c = 0;
@@ -58,7 +58,7 @@ var waves = [
 ];
 
 var waveSamples = [];
-function WaveSample(audioctx, ch, sampleLength, sampleRate) {
+export function WaveSample(audioctx, ch, sampleLength, sampleRate) {
 
   this.sample = audioctx.createBuffer(ch, sampleLength, sampleRate || audioctx.sampleRate);
   this.loop = false;
@@ -66,7 +66,7 @@ function WaveSample(audioctx, ch, sampleLength, sampleRate) {
   this.end = (sampleLength - 1) / (sampleRate || audioctx.sampleRate);
 }
 
-function createWaveSampleFromWaves(audioctx, sampleLength) {
+export function createWaveSampleFromWaves(audioctx, sampleLength) {
   for (var i = 0, end = waves.length; i < end; ++i) {
     var sample = new WaveSample(audioctx, 1, sampleLength);
     waveSamples.push(sample);
@@ -101,7 +101,7 @@ function createWaveSampleFromWaves(audioctx, sampleLength) {
   }
 }
 
-function WaveTexture(wave) {
+export function WaveTexture(wave) {
   this.wave = wave || waves[0];
   this.tex = new CanvasTexture(320, 10 * 16);
   this.render();
@@ -133,7 +133,7 @@ WaveTexture.prototype = {
 };
 
 /// エンベロープジェネレーター
-function EnvelopeGenerator(voice, attack, decay, sustain, release) {
+export function EnvelopeGenerator(voice, attack, decay, sustain, release) {
   this.voice = voice;
   //this.keyon = false;
   this.attack = attack || 0.0005;
@@ -170,7 +170,7 @@ EnvelopeGenerator.prototype =
 };
 
 /// ボイス
-function Voice(audioctx) {
+export function Voice(audioctx) {
   this.audioctx = audioctx;
   this.sample = waveSamples[6];
   this.gain = audioctx.createGain();
@@ -233,7 +233,7 @@ Voice.prototype = {
   }
 }
 
-function Audio() {
+export function Audio() {
   this.enable = false;
   this.audioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext;
 
@@ -304,7 +304,7 @@ Audio.prototype = {
 /* シーケンサーコマンド                       */
 /**********************************************/
 
-function Note(no, name) {
+export function Note(no, name) {
   this.no = no;
   this.name = name;
 }
@@ -649,7 +649,7 @@ LoopEnd.prototype.process = function(track)
 var LOOP_END = new LoopEnd();
 
 /// シーケンサートラック
-function Track(sequencer,seqdata)
+function Track(sequencer,seqdata,audio)
 {
   this.name = '';
   this.end = false;
@@ -727,7 +727,7 @@ Track.prototype = {
 function loadTracks(self,tracks, trackdata)
 {
   for (var i = 0; i < trackdata.length; ++i) {
-    var track = new Track(self, trackdata[i].data);
+    var track = new Track(self, trackdata[i].data,self.audio);
     track.channel = trackdata[i].channel;
     track.oneshot = (!trackdata[i].oneshot)?false:true;
     track.track = i;
@@ -743,7 +743,8 @@ function createTracks(trackdata)
 }
 
 /// シーケンサー本体
-function Sequencer() {
+export function Sequencer(audio) {
+  this.audio = audio;
   this.tempo = 100.0;
   this.repeat = false;
   this.play = false;
@@ -759,7 +760,7 @@ Sequencer.prototype = {
       this.stop();
     }
     this.tracks.length = 0;
-    loadTracks(this,this.tracks, data.tracks);
+    loadTracks(this,this.tracks, data.tracks,this.audio);
   },
   start:function()
   {
@@ -777,7 +778,7 @@ Sequencer.prototype = {
     }
   },
   playTracks: function (tracks){
-    var currentTime = audio.audioctx.currentTime;
+    var currentTime = this.audio.audioctx.currentTime;
     for (var i = 0, end = tracks.length; i < end; ++i) {
       tracks[i].process(currentTime);
     }
@@ -785,14 +786,14 @@ Sequencer.prototype = {
   pause:function()
   {
     this.status = this.PAUSE;
-    this.pauseTime = audio.audioctx.currentTime;
+    this.pauseTime = this.audio.audioctx.currentTime;
   },
   resume:function ()
   {
     if (this.status == this.PAUSE) {
       this.status = this.PLAY;
       var tracks = this.tracks;
-      var adjust = audio.audioctx.currentTime - this.pauseTime;
+      var adjust = this.audio.audioctx.currentTime - this.pauseTime;
       for (var i = 0, end = tracks.length; i < end; ++i) {
         tracks[i].playingTime += adjust;
       }
@@ -821,7 +822,8 @@ Sequencer.prototype = {
 }
 
 /// 簡易鍵盤の実装
-function Piano() {
+function Piano(audio) {
+  this.audio = audio;
   this.table = [90, 83, 88, 68, 67, 86, 71, 66, 72, 78, 74, 77, 188];
   this.keyon = new Array(13);
 }
@@ -832,7 +834,7 @@ Piano.prototype = {
     if (index == -1) {
       if (e.keyCode > 48 && e.keyCode < 57) {
         var timbre = e.keyCode - 49;
-        audio.voices[7].setSample(waveSamples[timbre]);
+        this.audio.voices[7].setSample(waveSamples[timbre]);
         waveGraph.wave = waves[timbre];
         waveGraph.render();
         textPlane.print(5, 10, "Wave " + (timbre + 1));
@@ -841,7 +843,7 @@ Piano.prototype = {
     } else {
       //audio.voices[0].processor.playbackRate.value = sequencer.noteFreq[];
       if (!this.keyon[index]) {
-        audio.voices[7].keyon(0,index + (e.shiftKey ? 84 : 72),1.0);
+        this.audio.voices[7].keyon(0,index + (e.shiftKey ? 84 : 72),1.0);
         this.keyon[index] = true;
       }
       return false;
@@ -861,4 +863,126 @@ Piano.prototype = {
     }
   }
 }
+
+export var seqData = {
+  name: 'Test',
+  tracks: [
+    {
+      name: 'part1',
+      channel: 0,
+      data:
+      [
+        ENV(0.01, 0.02, 0.5, 0.07),
+        TEMPO(180), TONE(0), VOLUME(0.5), L(8), GT(-0.5),O(4),
+        LOOP('i',4),
+        C, C, C, C, C, C, C, C,
+        LOOP_END,
+        JUMP(6)
+      ]
+    },
+    {
+      name: 'part2',
+      channel: 1,
+      data:
+        [
+        ENV(0.01, 0.05, 0.6, 0.07),
+        TONE(6), VOLUME(0.2), L(8), GT(-0.8),O(6),
+        R(1), R(1),
+        L(1), F,
+        E,
+        OD, L(8, true), Bb, G, L(4), Bb, OU, L(4), F, L(8), D,
+        L(4, true), E, L(2), C,R(8),
+        JUMP(7)
+        ]
+    },
+    {
+      name: 'part3',
+      channel: 2,
+      data:
+        [
+        ENV(0.01, 0.05, 0.6, 0.07),
+        TONE(6), VOLUME(0.1), L(8), GT(-0.5), O(6),DETUNE(0.992),
+        R(1), R(1),
+        O(6),L(1), C,
+        C,
+        OD, L(8, true), G, D, L(4), G, OU, L(4), D, L(8),OD, G,
+        L(4, true), OU,C, L(2),OD, G, R(8),
+        JUMP(8)
+        ]
+    }
+  ]
+}
+
+export function SoundEffects(sequencer) {
+   this.soundEffects =
+    [
+    // Effect 0 ////////////////////////////////////
+    createTracks.call(sequencer,[
+    {
+      channel: 8,
+      oneshot:true,
+      data: [VOLUME(0.5),
+        ENV(0.0001, 0.01, 1.0, 0.0001),GT(-0.999),TONE(0), TEMPO(200), O(8),ST(3), C, D, E, F, G, A, B, OU, C, D, E, G, A, B,B,B,B
+      ]
+    },
+    {
+      channel: 9,
+      oneshot: true,
+      data: [VOLUME(0.5),
+        ENV(0.0001, 0.01, 1.0, 0.0001), DETUNE(0.9), GT(-0.999), TONE(0), TEMPO(200), O(5), ST(3), C, D, E, F, G, A, B, OU, C, D, E, G, A, B,B,B,B
+      ]
+    }
+    ]),
+    // Effect 1 /////////////////////////////////////
+    createTracks.call(sequencer,
+      [
+        {
+          channel: 10,
+          oneshot: true,
+          data: [
+           TONE(4), TEMPO(150), ST(4), GT(-0.9999), ENV(0.0001, 0.0001, 1.0, 0.0001),
+           O(6), G, A, B, O(7), B, A, G, F, E, D, C, E, G, A, B, OD, B, A, G, F, E, D, C, OD, B, A, G, F, E, D, C
+          ]
+        }
+      ]),
+    // Effect 2//////////////////////////////////////
+    createTracks.call(sequencer,
+      [
+        {
+          channel: 10,
+          oneshot: true,
+          data: [
+           TONE(0), TEMPO(150), ST(2), GT(-0.9999), ENV(0.0001, 0.0001, 1.0, 0.0001),
+           O(8), C,D,E,F,G,A,B,OU,C,D,E,F,OD,G,OU,A,OD,B,OU,A,OD,G,OU,F,OD,E,OU,E
+          ]
+        }
+      ]),
+      // Effect 3 ////////////////////////////////////
+      createTracks.call(sequencer,
+        [
+          {
+            channel: 10,
+            oneshot: true,
+            data: [
+             TONE(5), TEMPO(150), L(64), GT(-0.9999), ENV(0.0001, 0.0001, 1.0, 0.0001),
+             O(6),C,OD,C,OU,C,OD,C,OU,C,OD,C,OU,C,OD
+            ]
+          }
+        ]),
+      // Effect 4 ////////////////////////////////////////
+      createTracks.call(sequencer,
+        [
+          {
+            channel: 11,
+            oneshot: true,
+            data: [
+             TONE(8), VOLUME(2.0),TEMPO(120), L(2), GT(-0.9999), ENV(0.0001, 0.0001, 1.0, 0.25),
+             O(1), C
+            ]
+          }
+        ])
+   ];
+ }
+
+
 
