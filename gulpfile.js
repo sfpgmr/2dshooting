@@ -40,7 +40,13 @@ gulp.task('js',function(){
     .on("error", function (err) { console.log("Error : " + err.message); })
     .pipe(source('bundle.js'))
     .pipe(gulp.dest('./dist/js'));
-    gulp.src('./src/js/dsp.js').pipe(gulp.dest('./dist/js'));
+    try {
+      fs.accessSync('./dist/js/dsp.js');
+    } catch (e) {
+      if(e.code == 'ENOENT'){
+        gulp.src('./src/js/dsp.js').pipe(gulp.dest('./dist/js'));
+      }
+    }
 });
 
 //HTMLのコピー
@@ -56,7 +62,7 @@ gulp.task('res',function(){
 // devverディレクトリへのコピー
 gulp.task('devver',function(){
   var date = new Date();
-  var destdir = './dever/' + date.getUTCFullYear() + ('0' + date.getMonth()).slice(-2)  + ('0' + date.getDate()).slice(-2);
+  var destdir = './devver/' + date.getUTCFullYear() + ('0' + (date.getMonth() + 1)).slice(-2)  + ('0' + date.getDate()).slice(-2);
   
   try {
     fs.mkdir(destdir);
