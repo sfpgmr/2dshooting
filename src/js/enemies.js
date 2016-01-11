@@ -703,11 +703,8 @@ Enemies.prototype.movePatterns = [
   ],
   [ // 6 ///////////////////////
     new CircleMove(1.5 * Math.PI, Math.PI, 96, 4, false),
-//    new LineMove(0.5 * PI,4,50),
     new CircleMove(0, 2 * Math.PI, 48, 4, true),
-    //new CircleMove(0, 2 * PI, 56, 3, true),
     new CircleMove(Math.PI, 0.75 * Math.PI, 32, 4, false),
-  //  new CircleMove(1.5 * PI, 2 * PI, 32, 3, true),
     new GotoHome(),
     new HomeMove(),
     new CircleMove(Math.PI,0,10,3,false),
@@ -749,24 +746,11 @@ Enemies.prototype.moveSeqs = [
     [0.08, -56, 176, -15, 40, -7, Zako, true],
     [0.08, -56, 176, -75, -120, -4, Zako, true],
 
-/*    [0.5, 0, 176, 75, 60, 0, Zako, true],
-    [0.05, 0, 176, 35, 60, 0, Zako, true],
-    [0.05, 0, 176, 55, 60, 0, Zako, true],
-    [0.05, 0, 176, 15, 60, 0, Zako, true],
-    [0.05, 0, 176, 95, 60, 0, Zako, true],*/
-
     [0.8, 128, -128, 75, 60, 6, Zako, true],
     [0.08, 128, -128, 35, 60, 6, Zako, true],
     [0.08, 128, -128, 55, 60, 6, Zako, true],
     [0.08, 128, -128, 15, 60, 6, Zako, true],
     [0.08, 128, -128, 95, 60, 6, Zako, true],
-/*
-    [0.5, 0, 176, -75, 60, 2, Zako, true],
-    [0.05, 0, 176, -35, 60, 2, Zako, true],
-    [0.05, 0, 176, -55, 60, 2, Zako, true],
-    [0.05, 0, 176, -15, 60, 2, Zako, true],
-    [0.05, 0, 176, -95, 60, 2, Zako, true],
-    */
 
     [0.8, -128, -128, -75, 60, -6, Zako, true],
     [0.08, -128, -128, -35, 60, -6, Zako, true],
@@ -805,8 +789,6 @@ Enemies.prototype.moveSeqs = [
     [0.05, 0, 176, -65, 120, 3, MBoss, true],
     [0.05, 0, 176, -15, 100, 3, Zako1, true],
     [0.05, 0, 176, -25, 120, 3, MBoss, true]
-
-
   ]
 ];
 
