@@ -1,32 +1,33 @@
 
 "use strict";
 
-export function Task(func,priority) {
-  this.priority = priority || 10000;
-  this.func = func;
-  this.index = 0;
+export class Task {
+  constructor(func,priority) {
+    this.priority = priority || 10000;
+    this.func = func;
+    this.index = 0;
+  }
+  
 }
 
 export var nullTask = new Task(null);
 
 /// タスク管理
-export function Tasks() {
-  this.array = new Array(0);
-  this.needSort = false;
-  this.needCompress = false;
-}
-
-
-Tasks.prototype = {
+export class Tasks {
+  constructor(){
+    this.array = new Array(0);
+    this.needSort = false;
+    this.needCompress = false;
+  }
   // indexの位置のタスクを置き換える
-  setNextTask: function (index, func, priority) {
+  setNextTask(index, func, priority) {
     var t = new Task(func, priority);
     t.index = index;
     this.array[index] = t;
     this.needSort = true;
-  },
+  }
 
-  pushTask: function (func, priority) {
+  pushTask(func, priority) {
     var t = new Task(func, priority);
     for (var i = 0; i < this.array.length; ++i) {
       if (this.array[i] == nullTask) {
@@ -39,17 +40,18 @@ Tasks.prototype = {
     this.array[this.array.length] = t;
     this.needSort = true;
     return t;
-  },
+  }
+
   // 配列を取得する
-  getArray: function () {
+  getArray() {
     return this.array;
-  },
+  }
   // タスクをクリアする
-  clear: function () {
+  clear() {
     this.array.length = 0;
-  },
+  }
   // ソートが必要かチェックし、ソートする
-  checkSort: function () {
+  checkSort() {
     if (this.needSort) {
       this.array.sort(function (a, b) {
         if(a.priority > b.priority) return 1;
@@ -62,12 +64,14 @@ Tasks.prototype = {
       }
      this.needSort = false;
     }
-  },
-  removeTask: function (index) {
+  }
+
+  removeTask(index) {
     this.array[index] = nullTask;
     this.needCompress = true;
-  },
-  compress: function () {
+  }
+  
+  compress() {
     if (!this.needCompress) {
       return;
     }
@@ -85,47 +89,51 @@ Tasks.prototype = {
     this.array = dest;
     this.needCompress = false;
   }
-};
 
-
-/// ゲーム用タイマー
-export function GameTimer(getCurrentTime) {
-  this.elapsedTime = 0;
-  this.currentTime = 0;
-  this.pauseTime = 0;
-  this.status = this.STOP;
-  this.getCurrentTime = getCurrentTime;
 }
 
-GameTimer.prototype = {
-  start: function () {
+/// ゲーム用タイマー
+export class GameTimer {
+  constructor(getCurrentTime) {
+    this.elapsedTime = 0;
+    this.currentTime = 0;
+    this.pauseTime = 0;
+    this.status = this.STOP;
+    this.getCurrentTime = getCurrentTime;
+    this.STOP = 1;
+    this.START = 2;
+    this.PAUSE = 3;
+
+  }
+  
+  start() {
     this.elapsedTime = 0;
     this.deltaTime = 0;
     this.currentTime = this.getCurrentTime();
     this.status = this.START;
-  },
-  resume: function () {
+  }
+
+  resume() {
     var nowTime = this.getCurrentTime();
     this.currentTime = this.currentTime + nowTime - this.pauseTime;
     this.status = this.START;
-  },
-  pause: function () {
+  }
+
+  pause() {
     this.pauseTime = this.getCurrentTime();
     this.status = this.PAUSE;
-  },
-  stop: function () {
+  }
+
+  stop() {
     this.status = this.STOP;
-  },
-  update: function () {
+  }
+
+  update() {
     if (this.status != this.START) return;
     var nowTime = this.getCurrentTime();
     this.deltaTime = nowTime - this.currentTime;
     this.elapsedTime = this.elapsedTime + this.deltaTime;
     this.currentTime = nowTime;
-  },
-  STOP: 1,
-  START: 2,
-  PAUSE: 3
+  }
 }
-
 

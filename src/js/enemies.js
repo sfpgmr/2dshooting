@@ -84,7 +84,7 @@ EnemyBullet.prototype = {
 //    console.log('dx:' + this.dx + ' dy:' + this.dy);
 
     var enb = this;
-    this.task = sfg.tasks.pushTask(function (i) { enb.move(i); });
+    this.task = sfg.tasks.pushTask(enb.move.bind(enb));
     return true;
   },
   hit: function () {

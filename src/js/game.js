@@ -61,9 +61,11 @@ var soundEffects;
 var ens;
 var enbs;
 
-function ScoreEntry(name, score) {
+class ScoreEntry{
+  constructor(name, score) {
   this.name = name;
   this.score = score;
+}
 }
 
 
@@ -318,37 +320,6 @@ window.onload = function () {
     start = true;
     game();
   });
-  
-  // var texLoader = function(src){
-  //   return new Promise(function(resolve,reject){
-  //     
-  //   });
-  // }
-  // for(var p in textures){
-  //   v
-  // }
-  
-  // (function () {
-  //   progress = new graphics.Progress();
-  //   progress.mesh.position.z = 0.001;
-  //   progress.render('Loading Resouces ...', 0);
-  //   scene.add(progress.mesh);
-  //   function loadResouces() {
-  //     renderer.render(scene, camera);
-  //     if (sfg.textureFiles.loadCompletedCount == sfg.textureFiles.totalTextureCount)
-  //     {
-  //       scene.remove(progress.mesh);
-  //       //progress.render('Loading Complete.', 100);
-  //     } else {
-  //       progress.render('Loading Resouces ...', (textureFiles.loadCompletedCount / textureFiles.totalTextureCount * 100) | 0);
-  //       window.setTimeout(loadResources, 100);
-  //     }
-  //   }
-  //   loadResouces();
-  // }
-  // )();
-
-
 };
 
 /// ゲームメイン
