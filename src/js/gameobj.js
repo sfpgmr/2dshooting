@@ -28,21 +28,21 @@ export class CollisionArea {
   }
 }
 
-export function GameObj(x, y, z) {
-  this.x_ = x || 0;
-  this.y_ = y || 0;
-  this.z_ = z || 0.0;
-  this.enable_ = false;
-  this.width = 0;
-  this.height = 0;
-  this.collisionArea = new CollisionArea();
-}
-
-GameObj.prototype = {
-  get x() { return this.x_; },
-  set x(v) { this.x_ = v; },
-  get y() { return this.y_; },
-  set y(v) { this.y_ = v; },
-  get z() { return this.z_; },
+export class GameObj {
+  constructor(x, y, z) {
+    this.x_ = x || 0;
+    this.y_ = y || 0;
+    this.z_ = z || 0.0;
+    this.enable_ = false;
+    this.width = 0;
+    this.height = 0;
+    this.collisionArea = new CollisionArea();
+  }
+  get x() { return this.x_; }
+  set x(v) { this.x_ = v; }
+  get y() { return this.y_; }
+  set y(v) { this.y_ = v; }
+  get z() { return this.z_; }
   set z(v) { this.z_ = v; }
 }
+

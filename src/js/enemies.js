@@ -4,48 +4,52 @@ import * as sfg from './global';
 import * as graphics from './graphics';
 
 /// 敵弾
-export function EnemyBullet(scene,se)
-{
-  gameobj.GameObj.call(this, 0, 0, 0);
-  this.collisionArea.width = 2;
-  this.collisionArea.height = 2;
-  var tex = sfg.textureFiles.enemy;
-  var material = graphics.createSpriteMaterial(tex);
-  var geometry = graphics.createSpriteGeometry(16);
-  graphics.createSpriteUV(geometry, tex, 16, 16, 0);
-  this.mesh = new THREE.Mesh(geometry, material);
-  this.z = 0.0;
-  this.mvPattern = null;
-  this.mv = null;
-  this.mesh.visible = false;
-  this.type = null;
-  this.life = 0;
-  this.dx = 0;
-  this.dy = 0;
-  this.speed = 2.0;
-  this.enable = false;
-  this.hit_ = null;
-  this.status = this.NONE;
-  this.scene = scene;
-  scene.add(this.mesh);
-  this.se = se;
-}
+export class EnemyBullet extends gameobj.GameObj {
+  constructor(scene, se) {
+    super(0, 0, 0);
+    this.NONE = 0;
+    this.MOVE = 1;
+    this.BOMB = 2;
+    this.collisionArea.width = 2;
+    this.collisionArea.height = 2;
+    var tex = sfg.textureFiles.enemy;
+    var material = graphics.createSpriteMaterial(tex);
+    var geometry = graphics.createSpriteGeometry(16);
+    graphics.createSpriteUV(geometry, tex, 16, 16, 0);
+    this.mesh = new THREE.Mesh(geometry, material);
+    this.z = 0.0;
+    this.mvPattern = null;
+    this.mv = null;
+    this.mesh.visible = false;
+    this.type = null;
+    this.life = 0;
+    this.dx = 0;
+    this.dy = 0;
+    this.speed = 2.0;
+    this.enable = false;
+    this.hit_ = null;
+    this.status = this.NONE;
+    this.scene = scene;
+    scene.add(this.mesh);
+    this.se = se;
+  }
 
-EnemyBullet.prototype = {
-  get x() { return this.x_; },
-  set x(v) { this.x_ = this.mesh.position.x = v; },
-  get y() { return this.y_; },
-  set y(v) { this.y_ = this.mesh.position.y = v; },
-  get z() { return this.z_; },
-  set z(v) { this.z_ = this.mesh.position.z = v; },
+  get x() { return this.x_; }
+  set x(v) { this.x_ = this.mesh.position.x = v; }
+  get y() { return this.y_; }
+  set y(v) { this.y_ = this.mesh.position.y = v; }
+  get z() { return this.z_; }
+  set z(v) { this.z_ = this.mesh.position.z = v; }
   get enable() {
     return this.enable_;
-  },
+  }
+  
   set enable(v) {
     this.enable_ = v;
     this.mesh.visible = v;
-  },
-  move: function (taskIndex) {
+  }
+  
+  move(taskIndex) {
     if (this.status == this.NONE)
     {
       debugger;
@@ -63,8 +67,9 @@ EnemyBullet.prototype = {
        this.enable = false;
        sfg.tasks.removeTask(taskIndex);
     }
-   },
-  start: function (x, y, z) {
+   }
+   
+  start(x, y, z) {
     if (this.enable) {
       return false;
     }
@@ -86,28 +91,24 @@ EnemyBullet.prototype = {
     var enb = this;
     this.task = sfg.tasks.pushTask(enb.move.bind(enb));
     return true;
-  },
-  hit: function () {
+  }
+  hit() {
     this.enable = false;
     sfg.tasks.removeTask(this.task.index);
     this.status = this.NONE;
-  },
-  NONE: 0,
-  MOVE: 1,
-  BOMB: 2
-}
-
-export function EnemyBullets(scene,se)
-{
-  this.scene = scene;
-  this.enemyBullets = [];
-  for (var i = 0; i < 48; ++i) {
-    this.enemyBullets.push(new EnemyBullet(this.scene,se));
   }
 }
 
-EnemyBullets.prototype = {
-  start: function (x, y, z) {
+
+export class EnemyBullets {
+  constructor(scene, se) {
+    this.scene = scene;
+    this.enemyBullets = [];
+    for (var i = 0; i < 48; ++i) {
+      this.enemyBullets.push(new EnemyBullet(this.scene, se));
+    }
+  }
+  start(x, y, z) {
     var ebs = this.enemyBullets;
     for(var i = 0,end = ebs.length;i< end;++i){
       if(!ebs[i].enable){
@@ -115,8 +116,9 @@ EnemyBullets.prototype = {
         break;
       }
     }
-  },
-  reset: function()
+  }
+  
+  reset()
   {
     var ebs = this.enemyBullets;
     for (var i = 0, end = ebs.length; i < end; ++i) {
@@ -131,18 +133,16 @@ EnemyBullets.prototype = {
 
 /// 敵キャラの動き ///////////////////////////////
 /// 直線運動
-function LineMove(rad, speed, step)
-{
-  this.rad = rad;
-  this.speed = speed;
-  this.step = step;
-  this.currentStep = step;
-  this.dx = Math.cos(rad) * speed;
-  this.dy = Math.sin(rad) * speed;
-}
-
-LineMove.prototype = {
-  start: function (self, x, y) {
+class LineMove {
+  constructor(rad, speed, step) {
+    this.rad = rad;
+    this.speed = speed;
+    this.step = step;
+    this.currentStep = step;
+    this.dx = Math.cos(rad) * speed;
+    this.dy = Math.sin(rad) * speed;
+  }
+  start(self, x, y) {
     self.moveEnd = false;
     self.step = this.step;
     if (self.xrev) {
@@ -150,8 +150,9 @@ LineMove.prototype = {
     } else {
       self.charRad = this.rad - PI / 2;
     }
-  },
-  move: function (self) {
+  }
+
+  move(self) {
     if (self.moveEnd) {
       return;
     }
@@ -165,37 +166,36 @@ LineMove.prototype = {
     if (!self.step) {
       self.moveEnd = true;
     }
-
   }
 }
 
 /// 円運動
-function CircleMove(startRad, stopRad, r, speed, left) {
-  this.startRad = startRad || 0;
-  this.stopRad = stopRad || 0;
-  this.r = r || 0;
-  this.speed = speed || 0;
-  this.left = !left ? false : true;
-  this.deltas = [];
-  var rad = this.startRad;
-  var step = (left ? 1 : -1) * speed / r;
-  var end = false;
-  while (!end) {
-    rad += step;
-    if ((left && (rad >= this.stopRad)) || (!left && rad <= this.stopRad)) {
-      rad = this.stopRad;
-      end = true;
+class CircleMove {
+  constructor(startRad, stopRad, r, speed, left) {
+    this.startRad = startRad || 0;
+    this.stopRad = stopRad || 0;
+    this.r = r || 0;
+    this.speed = speed || 0;
+    this.left = !left ? false : true;
+    this.deltas = [];
+    var rad = this.startRad;
+    var step = (left ? 1 : -1) * speed / r;
+    var end = false;
+    while (!end) {
+      rad += step;
+      if ((left && (rad >= this.stopRad)) || (!left && rad <= this.stopRad)) {
+        rad = this.stopRad;
+        end = true;
+      }
+      this.deltas.push({
+        x: this.r * Math.cos(rad),
+        y: this.r * Math.sin(rad),
+        rad: rad
+      });
     }
-    this.deltas.push({
-      x: this.r * Math.cos(rad),
-      y: this.r * Math.sin(rad),
-      rad: rad
-    });
-  }
-};
+  };
 
-CircleMove.prototype = {
-  start: function (self, x, y) {
+  start(self, x, y) {
     self.moveEnd = false;
     self.step = 0;
     if (self.xrev) {
@@ -206,14 +206,14 @@ CircleMove.prototype = {
     self.sy = y - this.r * Math.sin(this.startRad);
     self.z = 0.0;
     return true;
-  },
-  move: function (self) {
+  }
+  move(self) {
     if (self.moveEnd) {
       return;
     }
     var delta = this.deltas[self.step];
 
-    self.x = self.sx + (self.xrev?delta.x * -1:delta.x);
+    self.x = self.sx + (self.xrev ? delta.x * -1 : delta.x);
     self.y = self.sy + delta.y;
     if (self.xrev) {
       self.charRad = (Math.PI - delta.rad) + (this.left ? -1 : 0) * Math.PI;
@@ -227,15 +227,12 @@ CircleMove.prototype = {
       self.moveEnd = true;
     }
   }
-};
-
-/// ホームポジションに戻る
-export function GotoHome() {
-
 }
 
-GotoHome.prototype = {
-  start: function (self, x, y) {
+/// ホームポジションに戻る
+class GotoHome {
+
+  start(self, x, y) {
     var rad = Math.atan2(self.homeY - self.y, self.homeX - self.x);
     self.charRad = rad - Math.PI / 2;
     self.rad = rad;
@@ -245,8 +242,8 @@ GotoHome.prototype = {
     self.moveEnd = false;
     self.z = 0.0;
     return true;
-  },
-  move: function (self) {
+  }
+  move(self) {
     if (self.moveEnd) { return; }
     if (Math.abs(self.x - self.homeX) < 2 && Math.abs(self.y - self.homeY) < 2) {
       self.charRad = 0;
@@ -269,19 +266,20 @@ GotoHome.prototype = {
 }
 
 ///
-export function HomeMove(){};
-HomeMove.prototype = 
-{
-  CENTER_X:0,
-  CENTER_Y:100,
-  start: function (self, x, y) {
+class HomeMove{
+  constructor(){
+    this.CENTER_X = 0;
+    this.CENTER_Y = 100;
+  }
+
+  start(self, x, y) {
     self.dx = self.homeX - this.CENTER_X;
     self.dy = self.homeY - this.CENTER_Y;
     self.moveEnd = false;
     self.z = -0.1;
     return true;
-  },
-  move: function (self) {
+  }
+  move(self) {
     if (self.moveEnd) { return; }
     if (self.status == self.ATTACK) {
       self.moveEnd = true;
@@ -296,23 +294,19 @@ HomeMove.prototype =
 }
 
 /// 指定シーケンスに移動する
-export function Goto(pos) { this.pos = pos; };
-Goto.prototype =
-{
-  start: function (self, x, y) {
+class Goto {
+  constructor(pos) { this.pos = pos; };
+  start(self, x, y) {
     self.index = this.pos - 1;
     return false;
-  },
-  move: function (self) {
+  }
+  move(self) {
   }
 }
 
 /// 敵弾発射
-export function Fire() {
-}
-
-Fire.prototype = {
-  start: function (self, x, y) {
+class Fire {
+  start(self, x, y) {
     let d = (sfg.stage.no / 20) * ( sfg.stage.difficulty);
     if (d > 1) { d = 1.0;}
     if (Math.random() < d) {
@@ -320,15 +314,16 @@ Fire.prototype = {
       self.moveEnd = true;
     }
     return false;
-  },
-  move: function (self) {
+  }
+  move(self) {
     if (self.moveEnd) { return; }
   }
 }
 
 /// 敵本体
-export function Enemy(enemies,scene,se) {
-  gameobj.GameObj.call(this, 0, 0, 0);
+export class Enemy extends gameobj.GameObj { 
+  constructor(enemies,scene,se) {
+  super(0, 0, 0);
   this.collisionArea.width = 12;
   this.collisionArea.height = 8;
   var tex = sfg.textureFiles.enemy;
@@ -352,17 +347,22 @@ export function Enemy(enemies,scene,se) {
   this.scene.add(this.mesh);
   this.se = se;
   this.enemies = enemies;
+  this.NONE =  0 ;
+  this.START =  1 ;
+  this.HOME =  2 ;
+  this.ATTACK =  3 ;
+  this.BOMB =  4 ;
+  
 }
-
-Enemy.prototype = {
-  get x() { return this.x_; },
-  set x(v) { this.x_ = this.mesh.position.x = v; },
-  get y() { return this.y_; },
-  set y(v) { this.y_ = this.mesh.position.y = v; },
-  get z() { return this.z_; },
-  set z(v) { this.z_ = this.mesh.position.z = v; },
+  get x() { return this.x_; }
+  set x(v) { this.x_ = this.mesh.position.x = v; }
+  get y() { return this.y_; }
+  set y(v) { this.y_ = this.mesh.position.y = v; }
+  get z() { return this.z_; }
+  set z(v) { this.z_ = this.mesh.position.z = v; }
+  
   ///敵の動き
-  move: function (taskIndex) {
+  move(taskIndex) {
     if (this.status == this.NONE)
     {
       debugger;
@@ -380,9 +380,10 @@ Enemy.prototype = {
     this.mv.move(this);
     this.mesh.scale.x = this.enemies.homeDelta2;
     this.mesh.rotation.z = this.charRad;
-  },
+  }
+  
   /// 初期化
-  start: function (x, y, z, homeX, homeY, mvPattern, xrev,type, clearTarget,groupID) {
+  start(x, y, z, homeX, homeY, mvPattern, xrev,type, clearTarget,groupID) {
     if (this.enable_) {
       return false;
     }
@@ -410,15 +411,14 @@ Enemy.prototype = {
     this.task = sfg.tasks.pushTask(function (i) { self.move(i); }, 10000);
     this.mesh.visible = true;
     return true;
-  },
-  hit: function () {
+  }
+  
+  hit() {
     if (this.hit_ == null) {
       this.life--;
       if (this.life == 0) {
-//        this.enable_ = false;
         sfg.bombs.start(this.x, this.y);
         this.se(1);
-//        sequencer.playTracks(soundEffects.soundEffects[1]);
         sfg.addScore(this.score);
         if (this.clearTarget) {
           this.enemies.hitEnemiesCount++;
@@ -434,19 +434,12 @@ Enemy.prototype = {
         sfg.tasks.removeTask(this.task.index);
       } else {
         this.se(2);
-//        sequencer.playTracks(soundEffects.soundEffects[2]);
         this.mesh.material.color.setHex(0xFF8080);
-        //        this.mesh.material.needsUpdate = true;
       }
     } else {
       this.hit_();
     }
-  },
-  NONE: 0 | 0,
-  START: 1 | 0,
-  HOME: 2 | 0,
-  ATTACK: 3 | 0,
-  BOMB: 4 | 0
+  }
 }
 
 function Zako(self) {
@@ -468,7 +461,8 @@ function MBoss(self) {
   graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 4);
 }
 
-export function Enemies(scene,se,enemyBullets) {
+export class Enemies{
+  constructor(scene,se,enemyBullets) {
   this.enemyBullets = enemyBullets;
   this.scene = scene;
   this.nextTime = 0;
@@ -480,10 +474,10 @@ export function Enemies(scene,se,enemyBullets) {
   for(var i = 0;i < 5;++i){
     this.groupData[i] = new Array(0);
   }
-};
+}
 
 /// 敵編隊の動きをコントロールする
-Enemies.prototype.move = function () {
+move() {
   var currentTime = sfg.gameTimer.elapsedTime;
   var moveSeqs = this.moveSeqs;
   var len = moveSeqs[sfg.stage.privateNo].length;
@@ -577,7 +571,7 @@ Enemies.prototype.move = function () {
 
 }
 
-Enemies.prototype.reset = function () {
+reset() {
   for (var i = 0, end = this.enemies.length; i < end; ++i) {
     var en = this.enemies[i];
     if (en.enable_)
@@ -590,7 +584,7 @@ Enemies.prototype.reset = function () {
   }
 }
 
-Enemies.prototype.calcEnemiesCount = function () {
+calcEnemiesCount() {
   var seqs = this.moveSeqs[sfg.stage.privateNo];
   this.totalEnemiesCount = 0;
   for (var i = 0, end = seqs.length; i < end; ++i) {
@@ -600,7 +594,7 @@ Enemies.prototype.calcEnemiesCount = function () {
   }
 }
 
-Enemies.prototype.start = function () {
+start() {
   this.nextTime = 0;
   this.currentIndex = 0;
   this.totalEnemiesCount = 0;
@@ -612,6 +606,8 @@ Enemies.prototype.start = function () {
     groupData[i].length = 0;
     groupData[i].goneCount = 0;
   }
+}
+
 }
 
 Enemies.prototype.movePatterns = [

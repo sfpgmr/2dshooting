@@ -17,10 +17,19 @@ export function calcScreenSize() {
     CONSOLE_WIDTH = window.innerWidth;
     CONSOLE_HEIGHT = window.innerHeight;
     if (CONSOLE_WIDTH >= CONSOLE_HEIGHT) {
+      CONSOLE_WIDTH = CONSOLE_HEIGHT * sfg.VIRTUAL_WIDTH / sfg.VIRTUAL_HEIGHT;
+      while(CONSOLE_WIDTH > window.innerWidth){
+        --CONSOLE_HEIGHT;
         CONSOLE_WIDTH = CONSOLE_HEIGHT * sfg.VIRTUAL_WIDTH / sfg.VIRTUAL_HEIGHT;
+      }
     } else {
+      CONSOLE_HEIGHT = CONSOLE_WIDTH * sfg.VIRTUAL_HEIGHT / sfg.VIRTUAL_WIDTH;
+      while(CONSOLE_HEIGHT > window.innerHeight){
+        --CONSOLE_WIDTH;
         CONSOLE_HEIGHT = CONSOLE_WIDTH * sfg.VIRTUAL_HEIGHT / sfg.VIRTUAL_WIDTH;
+      }
     }
+    console.log(CONSOLE_WIDTH,CONSOLE_HEIGHT);
 }
 
 var CONSOLE_WIDTH;
@@ -347,10 +356,11 @@ function game() {
     }
 };
 
-function render(taskIndex) {
-    renderer.render(scene, camera);
-    textPlane.render();
-    stats.update();
+function render(taskIndex) 
+{
+  renderer.render(scene, camera);
+  textPlane.render();
+  stats.update();
 }
 
 function init(taskIndex) {
@@ -571,8 +581,8 @@ function initTitle(taskIndex) {
     geometry.endy = [];
     for (var i = 0; i < 250; ++i) {
       var color = new THREE.Color();
-      var z = -1000.0 * Math.random() - 100.0;
-      color.setHSL(0.05 + Math.random() * 0.05, 1.0, (-1100 - z) / -1100);
+      var z = -1800.0 * Math.random() - 300.0;
+      color.setHSL(0.05 + Math.random() * 0.05, 1.0, (-2100 - z) / -2100);
       var endy = sfg.VIRTUAL_HEIGHT / 2 - z * sfg.VIRTUAL_HEIGHT / sfg.VIRTUAL_WIDTH;
       var vert2 = new THREE.Vector3((sfg.VIRTUAL_WIDTH - z * 2) * Math.random() - ((sfg.VIRTUAL_WIDTH - z * 2) / 2)
         , endy * 2 * Math.random() - endy, z);
@@ -584,7 +594,7 @@ function initTitle(taskIndex) {
 
     // マテリアルを作成
     //var texture = THREE.ImageUtils.loadTexture('images/particle1.png');
-    var material = new THREE.ParticleBasicMaterial({
+    var material = new THREE.PointsMaterial({
       size: 4, blending: THREE.AdditiveBlending,
       transparent: true, vertexColors: true, depthTest: true//, map: texture
     });

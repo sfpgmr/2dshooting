@@ -89,7 +89,12 @@ export class Tasks {
     this.array = dest;
     this.needCompress = false;
   }
-
+  
+  process()
+  {
+    
+    
+  }
 }
 
 /// ゲーム用タイマー

@@ -4,9 +4,12 @@ import * as sfg from './global';
 import * as gameobj from './gameobj';
 import * as graphics from './graphics';
 
+var myBullets = [];
+
 /// 自機弾 
-export function MyBullet(scene,se) {
-  gameobj.GameObj.call(this, 0, 0, 0);
+export class MyBullet extends gameobj.GameObj {
+  constructor(scene,se) {
+  super(0, 0, 0);
 
   this.collisionArea.width = 4;
   this.collisionArea.height = 6;
@@ -31,18 +34,15 @@ export function MyBullet(scene,se) {
   scene.add(this.mesh);
   this.mesh.visible = this.enable_ = false;
   //  sfg.tasks.pushTask(function (taskIndex) { self.move(taskIndex); });
-}
+ }
 
-var myBullets = [];
-
-MyBullet.prototype = {
-  get x() { return this.x_; },
-  set x(v) { this.x_ = this.mesh.position.x = v; },
-  get y() { return this.y_; },
-  set y(v) { this.y_ = this.mesh.position.y = v; },
-  get z() { return this.z_; },
-  set z(v) { this.z_ = this.mesh.position.z = v; },
-  move: function (taskIndex) {
+  get x() { return this.x_; }
+  set x(v) { this.x_ = this.mesh.position.x = v; }
+  get y() { return this.y_; }
+  set y(v) { this.y_ = this.mesh.position.y = v; }
+  get z() { return this.z_; }
+  set z(v) { this.z_ = this.mesh.position.z = v; }
+  move(taskIndex) {
     if (!this.enable_) {
       this.mesh.visible = false;
       sfg.tasks.removeTask(taskIndex);
@@ -56,9 +56,9 @@ MyBullet.prototype = {
       sfg.tasks.removeTask(taskIndex);
       this.enable_ = this.mesh.visible = false;
     };
-  },
+  }
 
-  start: function (x, y, z, aimRadian) {
+  start(x, y, z, aimRadian) {
     if (this.enable_) {
       return false;
     }
@@ -77,8 +77,9 @@ MyBullet.prototype = {
 }
 
 /// 自機オブジェクト
-export function MyShip(x, y, z,scene,se) {
-  gameobj.GameObj.call(this, x, y, z);// extend
+export class MyShip extends gameobj.GameObj { 
+  constructor(x, y, z,scene,se) {
+  super(x, y, z);// extend
 
   this.collisionArea.width = 6;
   this.collisionArea.height = 8;
@@ -119,25 +120,22 @@ export function MyShip(x, y, z,scene,se) {
   })();
   scene.add(this.mesh);
 }
-
-
-//MyShip.prototype = new GameObj();
-
-MyShip.prototype = {
-  get x() { return this.x_; },
-  set x(v) { this.x_ = this.mesh.position.x = v; },
-  get y() { return this.y_; },
-  set y(v) { this.y_ = this.mesh.position.y = v; },
-  get z() { return this.z_; },
-  set z(v) { this.z_ = this.mesh.position.z = v; },
-  shoot: function (aimRadian) {
+  get x() { return this.x_; }
+  set x(v) { this.x_ = this.mesh.position.x = v; }
+  get y() { return this.y_; }
+  set y(v) { this.y_ = this.mesh.position.y = v; }
+  get z() { return this.z_; }
+  set z(v) { this.z_ = this.mesh.position.z = v; }
+  
+  shoot(aimRadian) {
     for (var i = 0, end = this.myBullets.length; i < end; ++i) {
       if (this.myBullets[i].start(this.x, this.y , this.z,aimRadian)) {
         break;
       }
     }
-  },
-  action: function (basicInput) {
+  }
+  
+  action(basicInput) {
     if (basicInput.keyCheck.left) {
       if (this.x > this.left) {
         this.x -= 2;
@@ -172,8 +170,9 @@ MyShip.prototype = {
       basicInput.keyCheck.x = false;
       this.shoot(1.5 * Math.PI);
     }
-  },
-  hit: function () {
+  }
+  
+  hit() {
     this.mesh.visible = false;
     sfg.bombs.start(this.x, this.y, 0.2);
     this.se(4);
