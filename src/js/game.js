@@ -819,8 +819,10 @@ function processCollision(taskIndex)
             left < (en.x + enco.right) &&
             (en.x + enco.left) < right
             ) {
-            myb.enable_ = false;
-            en.hit();
+            en.hit(myb);
+            if(myb.power <= 0){
+              myb.enable_ = false;
+            }
             break;
           }
         }

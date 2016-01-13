@@ -324,6 +324,11 @@ class Fire {
 export class Enemy extends gameobj.GameObj { 
   constructor(enemies,scene,se) {
   super(0, 0, 0);
+  this.NONE =  0 ;
+  this.START =  1 ;
+  this.HOME =  2 ;
+  this.ATTACK =  3 ;
+  this.BOMB =  4 ;
   this.collisionArea.width = 12;
   this.collisionArea.height = 8;
   var tex = sfg.textureFiles.enemy;
@@ -347,11 +352,6 @@ export class Enemy extends gameobj.GameObj {
   this.scene.add(this.mesh);
   this.se = se;
   this.enemies = enemies;
-  this.NONE =  0 ;
-  this.START =  1 ;
-  this.HOME =  2 ;
-  this.ATTACK =  3 ;
-  this.BOMB =  4 ;
   
 }
   get x() { return this.x_; }
@@ -413,10 +413,13 @@ export class Enemy extends gameobj.GameObj {
     return true;
   }
   
-  hit() {
+  hit(mybullet) {
     if (this.hit_ == null) {
-      this.life--;
-      if (this.life == 0) {
+      var life = this.life;
+      this.life -= mybullet.power;
+      mybullet.power -= life; 
+//      this.life--;
+      if (this.life <= 0) {
         sfg.bombs.start(this.x, this.y);
         this.se(1);
         sfg.addScore(this.score);
@@ -437,7 +440,7 @@ export class Enemy extends gameobj.GameObj {
         this.mesh.material.color.setHex(0xFF8080);
       }
     } else {
-      this.hit_();
+      this.hit_(mybullet);
     }
   }
 }
@@ -730,61 +733,62 @@ Enemies.prototype.movePatterns = [
 Enemies.prototype.moveSeqs = [
   [
     // *** STAGE 1 *** //
-    [0.8, 56, 176, 75, 40, 7, Zako, true],
-    [0.08, 56, 176, 35, 40, 7, Zako, true],
-    [0.08, 56, 176, 55, 40, 7, Zako, true],
-    [0.08, 56, 176, 15, 40, 7, Zako, true],
-    [0.08, 56, 176, 75, -120, 4, Zako, true],
+    // interval,start x,start y,home x,home y,move pattern + x反転,clear target,group ID
+    [0.4, 56, 176, 75, 40, 7, Zako, true],
+    [0.04, 56, 176, 35, 40, 7, Zako, true],
+    [0.04, 56, 176, 55, 40, 7, Zako, true],
+    [0.04, 56, 176, 15, 40, 7, Zako, true],
+    [0.04, 56, 176, 75, -120, 4, Zako, true],
 
-    [0.8, -56, 176, -75, 40, -7, Zako, true],
-    [0.08, -56, 176, -35, 40, -7, Zako, true],
-    [0.08, -56, 176, -55, 40, -7, Zako, true],
-    [0.08, -56, 176, -15, 40, -7, Zako, true],
-    [0.08, -56, 176, -75, -120, -4, Zako, true],
+    [0.4, -56, 176, -75, 40, -7, Zako, true],
+    [0.04, -56, 176, -35, 40, -7, Zako, true],
+    [0.04, -56, 176, -55, 40, -7, Zako, true],
+    [0.04, -56, 176, -15, 40, -7, Zako, true],
+    [0.04, -56, 176, -75, -120, -4, Zako, true],
 
-    [0.8, 128, -128, 75, 60, 6, Zako, true],
-    [0.08, 128, -128, 35, 60, 6, Zako, true],
-    [0.08, 128, -128, 55, 60, 6, Zako, true],
-    [0.08, 128, -128, 15, 60, 6, Zako, true],
-    [0.08, 128, -128, 95, 60, 6, Zako, true],
+    [0.4, 128, -128, 75, 60, 6, Zako, true],
+    [0.04, 128, -128, 35, 60, 6, Zako, true],
+    [0.04, 128, -128, 55, 60, 6, Zako, true],
+    [0.04, 128, -128, 15, 60, 6, Zako, true],
+    [0.04, 128, -128, 95, 60, 6, Zako, true],
 
-    [0.8, -128, -128, -75, 60, -6, Zako, true],
-    [0.08, -128, -128, -35, 60, -6, Zako, true],
-    [0.08, -128, -128, -55, 60, -6, Zako, true],
-    [0.08, -128, -128, -15, 60, -6, Zako, true],
-    [0.08, -128, -128, -95, 60, -6, Zako, true],
+    [0.4, -128, -128, -75, 60, -6, Zako, true],
+    [0.04, -128, -128, -35, 60, -6, Zako, true],
+    [0.04, -128, -128, -55, 60, -6, Zako, true],
+    [0.04, -128, -128, -15, 60, -6, Zako, true],
+    [0.04, -128, -128, -95, 60, -6, Zako, true],
 
-    [0.7, 0, 176, 75, 80, 1, Zako1, true],
-    [0.05, 0, 176, 35, 80, 1, Zako1, true],
-    [0.05, 0, 176, 55, 80, 1, Zako1, true],
-    [0.05, 0, 176, 15, 80, 1, Zako1, true],
-    [0.05, 0, 176, 95, 80, 1, Zako1, true],
+    [0.3, 0, 176, 75, 80, 1, Zako1, true],
+    [0.03, 0, 176, 35, 80, 1, Zako1, true],
+    [0.03, 0, 176, 55, 80, 1, Zako1, true],
+    [0.03, 0, 176, 15, 80, 1, Zako1, true],
+    [0.03, 0, 176, 95, 80, 1, Zako1, true],
 
-    [0.7, 0, 176, -75, 80, 3, Zako1, true],
-    [0.05, 0, 176, -35, 80, 3, Zako1, true],
-    [0.05, 0, 176, -55, 80, 3, Zako1, true],
-    [0.05, 0, 176, -15, 80, 3, Zako1, true],
-    [0.05, 0, 176, -95, 80, 3, Zako1, true],
+    [0.3, 0, 176, -75, 80, 3, Zako1, true],
+    [0.03, 0, 176, -35, 80, 3, Zako1, true],
+    [0.03, 0, 176, -55, 80, 3, Zako1, true],
+    [0.03, 0, 176, -15, 80, 3, Zako1, true],
+    [0.03, 0, 176, -95, 80, 3, Zako1, true],
 
-    [0.7, 0, 176, 85, 120, 1, MBoss, true,1],
-    [0.05, 0, 176, 95, 100, 1, Zako1, true,1],
-    [0.05, 0, 176, 75, 100, 1, Zako1, true,1],
-    [0.05, 0, 176, 45, 120, 1, MBoss, true,2],
-    [0.05, 0, 176, 55, 100, 1, Zako1, true,2],
-    [0.05, 0, 176, 35, 100, 1, Zako1, true,2],
-    [0.05, 0, 176, 65, 120, 1, MBoss, true],
-    [0.05, 0, 176, 15, 100, 1, Zako1, true],
-    [0.05, 0, 176, 25, 120, 1, MBoss, true],
+    [0.3, 0, 176, 85, 120, 1, MBoss, true,1],
+    [0.03, 0, 176, 95, 100, 1, Zako1, true,1],
+    [0.03, 0, 176, 75, 100, 1, Zako1, true,1],
+    [0.03, 0, 176, 45, 120, 1, MBoss, true,2],
+    [0.03, 0, 176, 55, 100, 1, Zako1, true,2],
+    [0.03, 0, 176, 35, 100, 1, Zako1, true,2],
+    [0.03, 0, 176, 65, 120, 1, MBoss, true],
+    [0.03, 0, 176, 15, 100, 1, Zako1, true],
+    [0.03, 0, 176, 25, 120, 1, MBoss, true],
 
-    [0.8, 0, 176, -85, 120, 3, MBoss, true,3],
-    [0.05, 0, 176, -95, 100, 3, Zako1, true,3],
-    [0.05, 0, 176, -75, 100, 3, Zako1, true,3],
-    [0.05, 0, 176, -45, 120, 3, MBoss, true,4],
-    [0.05, 0, 176, -55, 100, 3, Zako1, true,4],
-    [0.05, 0, 176, -35, 100, 3, Zako1, true,4],
-    [0.05, 0, 176, -65, 120, 3, MBoss, true],
-    [0.05, 0, 176, -15, 100, 3, Zako1, true],
-    [0.05, 0, 176, -25, 120, 3, MBoss, true]
+    [0.3, 0, 176, -85, 120, 3, MBoss, true,3],
+    [0.03, 0, 176, -95, 100, 3, Zako1, true,3],
+    [0.03, 0, 176, -75, 100, 3, Zako1, true,3],
+    [0.03, 0, 176, -45, 120, 3, MBoss, true,4],
+    [0.03, 0, 176, -55, 100, 3, Zako1, true,4],
+    [0.03, 0, 176, -35, 100, 3, Zako1, true,4],
+    [0.03, 0, 176, -65, 120, 3, MBoss, true],
+    [0.03, 0, 176, -15, 100, 3, Zako1, true],
+    [0.03, 0, 176, -25, 120, 3, MBoss, true]
   ]
 ];
 

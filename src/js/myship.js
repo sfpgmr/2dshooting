@@ -14,6 +14,7 @@ export class MyBullet extends gameobj.GameObj {
   this.collisionArea.width = 4;
   this.collisionArea.height = 6;
   this.speed = 8;
+  this.power = 1;
 
   this.textureWidth = sfg.textureFiles.myship.image.width;
   this.textureHeight = sfg.textureFiles.myship.image.height;
@@ -58,13 +59,14 @@ export class MyBullet extends gameobj.GameObj {
     };
   }
 
-  start(x, y, z, aimRadian) {
+  start(x, y, z, aimRadian,power) {
     if (this.enable_) {
       return false;
     }
     this.x = x;
     this.y = y;
     this.z = z - 0.1;
+    this.power = power | 1;
     this.dx = Math.cos(aimRadian) * this.speed;
     this.dy = Math.sin(aimRadian) * this.speed;
     this.enable_ = this.mesh.visible = true;
@@ -85,10 +87,8 @@ export class MyShip extends gameobj.GameObj {
   this.collisionArea.height = 8;
   this.se = se;
   this.scene = scene;
-
   this.textureWidth = sfg.textureFiles.myship.image.width;
   this.textureHeight = sfg.textureFiles.myship.image.height;
-
   this.width = 16;
   this.height = 16;
 
@@ -119,6 +119,9 @@ export class MyShip extends gameobj.GameObj {
     return arr;
   })();
   scene.add(this.mesh);
+  
+  this.bulletPower = 1;
+
 }
   get x() { return this.x_; }
   set x(v) { this.x_ = this.mesh.position.x = v; }
@@ -129,7 +132,7 @@ export class MyShip extends gameobj.GameObj {
   
   shoot(aimRadian) {
     for (var i = 0, end = this.myBullets.length; i < end; ++i) {
-      if (this.myBullets[i].start(this.x, this.y , this.z,aimRadian)) {
+      if (this.myBullets[i].start(this.x, this.y , this.z,aimRadian,this.bulletPower)) {
         break;
       }
     }
