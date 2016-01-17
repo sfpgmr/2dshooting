@@ -13,7 +13,8 @@ export const PIXEL_SIZE = 1;
 export const ACTUAL_CHAR_SIZE = CHAR_SIZE * PIXEL_SIZE;
 export const SPRITE_SIZE_X = 16.0;
 export const SPRITE_SIZE_Y = 16.0;
-export const CHECK_COLLISION = false;
+export var CHECK_COLLISION = true;
+export const DEBUG = false;
 export var textureFiles = {};
 export var stage;
 export var tasks;
@@ -22,4 +23,6 @@ export var bombs;
 export var addScore;
 export var myship_;
 export const textureRoot = './res/';
+export var pause = false;
+export var game;
 

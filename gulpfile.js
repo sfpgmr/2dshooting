@@ -13,7 +13,7 @@ var uglifyify = require('uglifyify');
 
 // JSのビルド
 gulp.task('js',function(){
-    browserify('./src/js/game.js',{debug:true,extensions: ['.js']})
+    browserify('./src/js/main.js',{debug:true,extensions: ['.js']})
     .transform(babelify,{"plugins": [
       "transform-es2015-arrow-functions",
       "transform-es2015-block-scoped-functions",

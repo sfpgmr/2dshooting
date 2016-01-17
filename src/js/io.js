@@ -1,8 +1,9 @@
 "use strict";
+import * as sfg from './global'; 
 
 // キー入力
 export function BasicInput() {
-  this.keyCheck = { up: false, down: false, left: false, right: false, z: false ,x:false };
+  this.keyCheck = { up: false, down: false, left: false, right: false, z: false ,x:false};
   this.keyBuffer = [];
   this.keyup_ = null;
   this.keydown_ = null;
@@ -22,10 +23,6 @@ BasicInput.prototype = {
     var keyCheck = this.keyCheck;
     var handle = true;
      
-    if (e.keyCode == 192) {
-      CHECK_COLLISION = !CHECK_COLLISION;
-    };
-
     if (keyBuffer.length > 16) {
       keyBuffer.shift();
     }
@@ -118,13 +115,13 @@ BasicInput.prototype = {
   //イベントにバインドする
   bind:function()
   {
-    d3.select('body').on('keydown',this.keydown.bind(this));
-    d3.select('body').on('keyup',this.keyup.bind(this));
+    d3.select('body').on('keydown.basicInput',this.keydown.bind(this));
+    d3.select('body').on('keyup.basicInput',this.keyup.bind(this));
   },
   // アンバインドする
   unbind:function()
   {
-    d3.select('body').on('keydown',null);
-    d3.select('body').on('keyup',null);
+    d3.select('body').on('keydown.basicInput',null);
+    d3.select('body').on('keyup.basicInput',null);
   }
 }

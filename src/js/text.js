@@ -4,21 +4,24 @@ import * as sfg from './global';
 //import * as graphics from './graphics';
 
 /// テキスト属性
-export function TextAttribute(blink, font) {
-  if (blink) {
-    this.blink = blink;
-  } else {
-    this.blink = false;
-  }
-  if (font) {
-    this.font = font;
-  } else {
-    this.font = sfg.textureFiles.font;
+export class TextAttribute {
+  constructor(blink, font) {
+    if (blink) {
+      this.blink = blink;
+    } else {
+      this.blink = false;
+    }
+    if (font) {
+      this.font = font;
+    } else {
+      this.font = sfg.textureFiles.font;
+    }
   }
 }
 
 /// テキストプレーン
-export function TextPlane(scene) {
+export class TextPlane{ 
+  constructor (scene) {
   this.textBuffer = new Array(sfg.TEXT_HEIGHT);
   this.attrBuffer = new Array(sfg.TEXT_HEIGHT);
   this.textBackBuffer = new Array(sfg.TEXT_HEIGHT);
@@ -71,10 +74,8 @@ export function TextPlane(scene) {
   scene.add(this.mesh);
 }
 
-TextPlane.prototype = {
-  constructor:TextPlane,
   /// 画面消去
-  cls: function () {
+  cls() {
     for (var i = 0, endi = this.textBuffer.length; i < endi; ++i) {
       var line = this.textBuffer[i];
       var attr_line = this.attrBuffer[i];
@@ -89,10 +90,10 @@ TextPlane.prototype = {
       }
     }
     this.ctx.clearRect(0, 0, sfg.VIRTUAL_WIDTH, sfg.VIRTUAL_HEIGHT);
-  },
+  }
 
   /// 文字表示する
-  print: function (x, y, str, attribute) {
+  print(x, y, str, attribute) {
     var line = this.textBuffer[y];
     var attr = this.attrBuffer[y];
     if (!attribute) {
@@ -124,9 +125,10 @@ TextPlane.prototype = {
         ++x;
       }
     }
-  },
+  }
+  
   /// テキストデータをもとにテクスチャーに描画する
-  render: function () {
+  render() {
     var ctx = this.ctx;
     this.blinkCount = (this.blinkCount + 1) & 0xf;
 
