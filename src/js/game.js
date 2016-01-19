@@ -52,7 +52,7 @@ class Stage {
 
   update() {
     if (this.difficulty < this.DIFFICULTY_MAX) {
-      this.difficulty = 1 + 0.05 * this.privateNo;
+      this.difficulty = 1 + 0.05 * (this.stageNo - 1);
     }
 
     if (this.privateNo >= this.MAX) {
@@ -87,6 +87,7 @@ export class Game {
     this.highScore = 0;
     this.highScores = [];
     this.isHidden = false;
+    this.myship_ = null;
     this.enemies_ = null;
     this.enemyBullets = null;
     this.PI = Math.PI;
@@ -102,14 +103,9 @@ export class Game {
     this.spaceField = null;// 宇宙空間パーティクル
     this.editHandleName = null;
     sfg.addScore = this.addScore.bind(this);
-
-
-
-
     this.checkVisibilityAPI();
-
     this.audio_ = new audio.Audio();
-
+    this.status = null;
   }
 
   exec() {
@@ -155,6 +151,7 @@ export class Game {
       window.visibilityChange = "webkitvisibilitychange";
     }
   }
+  
   calcScreenSize() {
     var width = window.innerWidth;
     var height = window.innerHeight;
@@ -184,21 +181,32 @@ export class Game {
     renderer.setSize(this.CONSOLE_WIDTH, this.CONSOLE_HEIGHT);
     renderer.setClearColor(0, 1);
     renderer.domElement.id = 'console';
-    renderer.domElement.className = 'console';
+    if(sfg.DEBUG){
+      renderer.domElement.className = 'console-debug';
+    } else {
+      renderer.domElement.className = 'console';
+    }
     renderer.domElement.style.zIndex = 0;
 
+
     d3.select('#content').node().appendChild(renderer.domElement);
+    if(sfg.DEBUG){
+        // Stats オブジェクト(FPS表示)の作成表示
+        this.stats = new Stats();
+        this.stats.domElement.style.position = 'absolute';
+        this.stats.domElement.style.top = '0px';
+        this.stats.domElement.style.left = '0px';
+        this.stats.domElement.style.left = renderer.domElement.style.left;
+
+       d3.select('#content').append('div').attr('class','debug-ui').text('test')
+       .style('height',this.CONSOLE_HEIGHT + 'px')
+       .node().appendChild(this.stats.domElement);
+     }       
 
     window.addEventListener('resize', () => {
       this.calcScreenSize();
       renderer.setSize(this.CONSOLE_WIDTH, this.CONSOLE_HEIGHT);
     });
-    // Stats オブジェクト(FPS表示)の作成表示
-    this.stats = new Stats();
-    this.stats.domElement.style.position = 'absolute';
-    this.stats.domElement.style.top = '0px';
-    d3.select('#content').node().appendChild(this.stats.domElement);
-    this.stats.domElement.style.left = renderer.domElement.style.left;
 
     // シーンの作成
     this.scene = new THREE.Scene();
@@ -218,7 +226,11 @@ export class Game {
     if (sfg.DEBUG) {
       d3.select('body').on('keydown.DevTool', () => {
         var e = d3.event;
-        this.DevTool.keydown(e);
+        if(this.DevTool.keydown.next(e).value){
+          d3.event.preventDefault();
+          d3.event.cancelBubble = true;
+          return false;
+        };
       });
     }
     renderer.clear();
@@ -257,7 +269,7 @@ export class Game {
 
   resume() {
     if (sfg.gameTimer.status == sfg.gameTimer.PAUSE) {
-      sfg.gpameTimer.resume();
+      sfg.gameTimer.resume();
     }
     if (this.sequencer.status == this.sequencer.PAUSE) {
       this.sequencer.resume();
@@ -382,7 +394,7 @@ export class Game {
 render(taskIndex) {
   this.renderer.render(this.scene, this.camera);
   this.textPlane.render();
-  this.stats.update();
+  this.stats && this.stats.update();
 }
 
 init(taskIndex) {
@@ -603,6 +615,7 @@ initTitle(taskIndex) {
   this.tasks.setNextTask(taskIndex, this.showTitle.bind(this));
 }
 
+/// 背景パーティクル表示
 showSpaceField() {
   /// 背景パーティクル表示
   if (!this.spaceField) {
@@ -740,11 +753,10 @@ printScore() {
 
 }
 
+/// サウンドエフェクト
 se(index) {
   this.sequencer.playTracks(this.soundEffects.soundEffects[index]);
 }
-
-/// ハイスコア表示
 
 /// ゲームの初期化
 gameInit(taskIndex) {
@@ -755,11 +767,11 @@ gameInit(taskIndex) {
   this.sequencer.start();
   sfg.stage.reset();
   this.textPlane.cls();
-
   this.enemies_.reset();
 
   // 自機の初期化
-  sfg.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
+  this.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
+  sfg.myship_ = this.myship_;
   sfg.gameTimer.start();
   this.score = 0;
   this.textPlane.print(2, 0, 'Score    High Score');
@@ -789,9 +801,10 @@ stageStart(taskIndex) {
     this.textPlane.print(8, 15, '                  ', new text.TextAttribute(true));
     this.tasks.setNextTask(taskIndex, this.gameAction.bind(this), 5000);
   }
+  this.status = this.STATUS.INGAME;
 }
 
-/// 自機の動きを制御する
+/// ゲーム中
 gameAction(taskIndex) {
   this.printScore();
   sfg.myship_.action(this.basicInput);
@@ -800,9 +813,10 @@ gameAction(taskIndex) {
   this.enemies_.move();
 
   if (!this.processCollision()) {
+    // 面クリアチェック
     if (this.enemies_.hitEnemiesCount == this.enemies_.totalEnemiesCount) {
       this.printScore();
-      sfg.stage.advance();
+      this.stage.advance();
       this.tasks.setNextTask(taskIndex, this.stageInit.bind(this));
     }
   } else {
@@ -969,6 +983,10 @@ showTop10(taskIndex) {
   }
 }
 }
+
+Game.prototype.STATUS = {
+  INGAME:1
+};
 
 
 

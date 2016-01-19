@@ -1,41 +1,41 @@
 "use strict";
 import * as sfg from './global';
 
-export class DevTool
-{
-  constructor(global)
-  {
-    this.global = global;
+export class DevTool {
+  constructor(game) {
+    this.game = game;
+    this.keydown = this.keydown_();
+    this.keydown.next();
   }
-  
-  keydown(e)
-  {
-    var process = false;
-    if (e.keyCode == 192) { // @ Key
-      sfg.CHECK_COLLISION = !sfg.CHECK_COLLISION;
-      process = true;
-    };
-    
-    if(e.keyCode == 80 /* P */)
-    {
-      if(!sfg.pause){
-        this.global.pause();
-      } else {
-        this.global.resume();
+
+  *keydown_() {
+    var e = yield;
+    while (true) {
+      var process = false;
+      if (e.keyCode == 192) { // @ Key
+        sfg.CHECK_COLLISION = !sfg.CHECK_COLLISION;
+        process = true;
+      };
+
+      if (e.keyCode == 80 /* P */) {
+        if (!sfg.pause) {
+          this.game.pause();
+        } else {
+          this.game.resume();
+        }
+        process = true;
       }
-      process = true;
-    }
-    
-    if(e.keyCode == 88 /* X */ && sfg.DEBUG)
-    {
-      if(!sfg.pause){
-        this.global.pause();
-      } else {
-        this.global.resume();
+
+      if (e.keyCode == 88 /* X */ && sfg.DEBUG) {
+        if (!sfg.pause) {
+          this.game.pause();
+        } else {
+          this.game.resume();
+        }
+        process = true;
       }
-      process = true;
+      e = yield process;
     }
-    
-    return process;
   }
 }
+

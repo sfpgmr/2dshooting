@@ -465,151 +465,150 @@ function MBoss(self) {
 }
 
 export class Enemies{
-  constructor(scene,se,enemyBullets) {
-  this.enemyBullets = enemyBullets;
-  this.scene = scene;
-  this.nextTime = 0;
-  this.currentIndex = 0;
-  this.enemies = new Array(0);
-  for (var i = 0; i < 64; ++i) {
-    this.enemies.push(new Enemy(this,scene,se));
-  }
-  for(var i = 0;i < 5;++i){
-    this.groupData[i] = new Array(0);
-  }
-}
-
-/// 敵編隊の動きをコントロールする
-move() {
-  var currentTime = sfg.gameTimer.elapsedTime;
-  var moveSeqs = this.moveSeqs;
-  var len = moveSeqs[sfg.stage.privateNo].length;
-  // データ配列をもとに敵を生成
-  while (this.currentIndex < len) {
-    var data = moveSeqs[sfg.stage.privateNo][this.currentIndex];
-    var nextTime = this.nextTime != null ? this.nextTime : data[0];
-    if (currentTime >= (this.nextTime + data[0])) {
-      var enemies = this.enemies;
-      for (var i = 0, e = enemies.length; i < e; ++i) {
-        var enemy = enemies[i];
-        if (!enemy.enable_) {
-          enemy.start(data[1], data[2], 0, data[3], data[4], this.movePatterns[Math.abs(data[5])],data[5] < 0, data[6], data[7],data[8] || 0);
-          break;
-        }
-      }
-      this.currentIndex++;
-      if (this.currentIndex < len) {
-        this.nextTime = currentTime + moveSeqs[sfg.stage.privateNo][this.currentIndex][0];
-      }
-    } else {
-      break;
+  constructor(scene, se, enemyBullets) {
+    this.enemyBullets = enemyBullets;
+    this.scene = scene;
+    this.nextTime = 0;
+    this.currentIndex = 0;
+    this.enemies = new Array(0);
+    for (var i = 0; i < 64; ++i) {
+      this.enemies.push(new Enemy(this, scene, se));
     }
-  }
-  // ホームポジションに敵がすべて整列したか確認する。
-  if (this.homeEnemiesCount == this.totalEnemiesCount && this.status == this.START) {
-    // 整列していたら整列モードに移行する。
-    this.status = this.HOME;
-    this.endTime = sfg.gameTimer.elapsedTime + 1.0 * (2.0 - sfg.stage.difficulty);
-  }
-
-  // ホームポジションで一定時間待機する
-  if (this.status == this.HOME) {
-    if (sfg.gameTimer.elapsedTime > this.endTime) {
-      this.status = this.ATTACK;
-      this.endTime = sfg.gameTimer.elapsedTime + (sfg.stage.DIFFICULTY_MAX - sfg.stage.difficulty) * 3;
-      this.group = 0;
-      this.count = 0;
+    for (var i = 0; i < 5; ++i) {
+      this.groupData[i] = new Array(0);
     }
   }
 
-  // 攻撃する
-  if (this.status == this.ATTACK && sfg.gameTimer.elapsedTime > this.endTime) {
-    this.endTime = sfg.gameTimer.elapsedTime + (sfg.stage.DIFFICULTY_MAX - sfg.stage.difficulty) * 3;
-    var groupData = this.groupData;
-    var attackCount = (1 + 0.25 * (sfg.stage.difficulty)) | 0;
-    var group = groupData[this.group];
-
-    if (!group || group.length == 0) {
-      this.group = 0;
-      var group = groupData[0];
-    }
-
-    if (group.length > 0 && group.length > group.goneCount) {
-      if (!group.index) {
-        group.index = 0;
-      }
-      if (!this.group) {
-        var count = 0, endg = group.length;
-        while (count < endg && attackCount > 0) {
-          var en = group[group.index];
-          if (en.enable_ && en.status == en.HOME) {
-            en.status = en.ATTACK;
-            --attackCount;
+  /// 敵編隊の動きをコントロールする
+  move() {
+    var currentTime = sfg.gameTimer.elapsedTime;
+    var moveSeqs = this.moveSeqs;
+    var len = moveSeqs[sfg.stage.privateNo].length;
+    // データ配列をもとに敵を生成
+    while (this.currentIndex < len) {
+      var data = moveSeqs[sfg.stage.privateNo][this.currentIndex];
+      var nextTime = this.nextTime != null ? this.nextTime : data[0];
+      if (currentTime >= (this.nextTime + data[0])) {
+        var enemies = this.enemies;
+        for (var i = 0, e = enemies.length; i < e; ++i) {
+          var enemy = enemies[i];
+          if (!enemy.enable_) {
+            enemy.start(data[1], data[2], 0, data[3], data[4], this.movePatterns[Math.abs(data[5])], data[5] < 0, data[6], data[7], data[8] || 0);
+            break;
           }
-          count++;
-          group.index++;
-          if (group.index >= group.length) group.index = 0;
+        }
+        this.currentIndex++;
+        if (this.currentIndex < len) {
+          this.nextTime = currentTime + moveSeqs[sfg.stage.privateNo][this.currentIndex][0];
         }
       } else {
-        for (var i = 0, end = group.length; i < end; ++i) {
-          var en = group[i];
-          if (en.enable_ && en.status == en.HOME) {
-            en.status = en.ATTACK;
-          }
-        }
+        break;
+      }
+    }
+    // ホームポジションに敵がすべて整列したか確認する。
+    if (this.homeEnemiesCount == this.totalEnemiesCount && this.status == this.START) {
+      // 整列していたら整列モードに移行する。
+      this.status = this.HOME;
+      this.endTime = sfg.gameTimer.elapsedTime + 0.5 * (2.0 - sfg.stage.difficulty);
+    }
+
+    // ホームポジションで一定時間待機する
+    if (this.status == this.HOME) {
+      if (sfg.gameTimer.elapsedTime > this.endTime) {
+        this.status = this.ATTACK;
+        this.endTime = sfg.gameTimer.elapsedTime + (sfg.stage.DIFFICULTY_MAX - sfg.stage.difficulty) * 3;
+        this.group = 0;
+        this.count = 0;
       }
     }
 
-    this.group++;
-    if (this.group >= this.groupData.length) {
-      this.group = 0;
+    // 攻撃する
+    if (this.status == this.ATTACK && sfg.gameTimer.elapsedTime > this.endTime) {
+      this.endTime = sfg.gameTimer.elapsedTime + (sfg.stage.DIFFICULTY_MAX - sfg.stage.difficulty) * 3;
+      var groupData = this.groupData;
+      var attackCount = (1 + 0.25 * (sfg.stage.difficulty)) | 0;
+      var group = groupData[this.group];
+
+      if (!group || group.length == 0) {
+        this.group = 0;
+        var group = groupData[0];
+      }
+
+      if (group.length > 0 && group.length > group.goneCount) {
+        if (!group.index) {
+          group.index = 0;
+        }
+        if (!this.group) {
+          var count = 0, endg = group.length;
+          while (count < endg && attackCount > 0) {
+            var en = group[group.index];
+            if (en.enable_ && en.status == en.HOME) {
+              en.status = en.ATTACK;
+              --attackCount;
+            }
+            count++;
+            group.index++;
+            if (group.index >= group.length) group.index = 0;
+          }
+        } else {
+          for (var i = 0, end = group.length; i < end; ++i) {
+            var en = group[i];
+            if (en.enable_ && en.status == en.HOME) {
+              en.status = en.ATTACK;
+            }
+          }
+        }
+      }
+
+      this.group++;
+      if (this.group >= this.groupData.length) {
+        this.group = 0;
+      }
+
     }
 
+    // ホームポジションでの待機動作
+    this.homeDeltaCount += 0.025;
+    this.homeDelta = Math.sin(this.homeDeltaCount) * 0.08;
+    this.homeDelta2 = 1.0 + Math.sin(this.homeDeltaCount * 8) * 0.1;
+
   }
 
-  // ホームポジションでの待機動作
-  this.homeDeltaCount += 0.025;
-  this.homeDelta = Math.sin(this.homeDeltaCount) * 0.08;
-  this.homeDelta2 = 1.0 + Math.sin(this.homeDeltaCount * 8) * 0.1;
-
-}
-
-reset() {
-  for (var i = 0, end = this.enemies.length; i < end; ++i) {
-    var en = this.enemies[i];
-    if (en.enable_)
-    {
-      sfg.tasks.removeTask(en.task.index);
-      en.status = en.NONE;
-      en.enable_ = false;
-      en.mesh.visible = false;
+  reset() {
+    for (var i = 0, end = this.enemies.length; i < end; ++i) {
+      var en = this.enemies[i];
+      if (en.enable_) {
+        sfg.tasks.removeTask(en.task.index);
+        en.status = en.NONE;
+        en.enable_ = false;
+        en.mesh.visible = false;
+      }
     }
   }
-}
 
-calcEnemiesCount() {
-  var seqs = this.moveSeqs[sfg.stage.privateNo];
-  this.totalEnemiesCount = 0;
-  for (var i = 0, end = seqs.length; i < end; ++i) {
-    if (seqs[i][7]) {
-      this.totalEnemiesCount++;
+  calcEnemiesCount() {
+    var seqs = this.moveSeqs[sfg.stage.privateNo];
+    this.totalEnemiesCount = 0;
+    for (var i = 0, end = seqs.length; i < end; ++i) {
+      if (seqs[i][7]) {
+        this.totalEnemiesCount++;
+      }
     }
   }
-}
 
-start() {
-  this.nextTime = 0;
-  this.currentIndex = 0;
-  this.totalEnemiesCount = 0;
-  this.hitEnemiesCount = 0;
-  this.homeEnemiesCount = 0;
-  this.status = this.START;
-  var groupData = this.groupData;
-  for (var i = 0, end = groupData.length; i < end ; ++i) {
-    groupData[i].length = 0;
-    groupData[i].goneCount = 0;
+  start() {
+    this.nextTime = 0;
+    this.currentIndex = 0;
+    this.totalEnemiesCount = 0;
+    this.hitEnemiesCount = 0;
+    this.homeEnemiesCount = 0;
+    this.status = this.START;
+    var groupData = this.groupData;
+    for (var i = 0, end = groupData.length; i < end; ++i) {
+      groupData[i].length = 0;
+      groupData[i].goneCount = 0;
+    }
   }
-}
 
 }
 
@@ -622,13 +621,13 @@ Enemies.prototype.movePatterns = [
     new CircleMove(Math.PI / 4, -3 * Math.PI, 40, 5, false),
     new GotoHome(),
     new HomeMove(),
-    new CircleMove(Math.PI,0,10,3,false),
-    new CircleMove(0,-0.125 * Math.PI,200,3,false),
+    new CircleMove(Math.PI, 0, 10, 3, false),
+    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
     new Fire(),
     new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 150, 2.5, false),
-    new CircleMove(3 * Math.PI / 4,4 * Math.PI,40,2.5,true),
+    new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 2.5, true),
     new Goto(4)
-],// 1
+  ],// 1
   [
     new CircleMove(Math.PI, 1.125 * Math.PI, 300, 5, true),
     new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 200, 5, true),
@@ -636,8 +635,8 @@ Enemies.prototype.movePatterns = [
     new CircleMove(Math.PI / 4, -3 * Math.PI, 40, 6, false),
     new GotoHome(),
     new HomeMove(),
-    new CircleMove(Math.PI,0,10,3,false),
-    new CircleMove(0,-0.125 * Math.PI,200,3,false),
+    new CircleMove(Math.PI, 0, 10, 3, false),
+    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
     new Fire(),
     new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 250, 3, false),
     new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 3, true),
@@ -650,11 +649,11 @@ Enemies.prototype.movePatterns = [
     new CircleMove(3 * Math.PI / 4, (2 + 0.25) * Math.PI, 40, 5, true),
     new GotoHome(),
     new HomeMove(),
-    new CircleMove(0,Math.PI,10,3,true),
-    new CircleMove( Math.PI, 1.125 * Math.PI, 200, 3, true),
+    new CircleMove(0, Math.PI, 10, 3, true),
+    new CircleMove(Math.PI, 1.125 * Math.PI, 200, 3, true),
     new Fire(),
     new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 150, 2.5, true),
-    new CircleMove(0.25 * Math.PI,-3 * Math.PI,40,2.5,false),
+    new CircleMove(0.25 * Math.PI, -3 * Math.PI, 40, 2.5, false),
     new Goto(4)
   ],// 3
   [
@@ -665,11 +664,11 @@ Enemies.prototype.movePatterns = [
     new Fire(),
     new GotoHome(),
     new HomeMove(),
-    new CircleMove(0,Math.PI,10,3,true),
-    new CircleMove( Math.PI, 1.125 * Math.PI, 200, 3, true),
+    new CircleMove(0, Math.PI, 10, 3, true),
+    new CircleMove(Math.PI, 1.125 * Math.PI, 200, 3, true),
     new Fire(),
     new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 150, 3, true),
-    new CircleMove(0.25 * Math.PI,-3 * Math.PI,40,3,false),
+    new CircleMove(0.25 * Math.PI, -3 * Math.PI, 40, 3, false),
     new Goto(4)
   ],
   [ // 4
@@ -706,11 +705,11 @@ Enemies.prototype.movePatterns = [
     new CircleMove(Math.PI, 0.75 * Math.PI, 32, 4, false),
     new GotoHome(),
     new HomeMove(),
-    new CircleMove(Math.PI,0,10,3,false),
-    new CircleMove(0,-0.125 * Math.PI,200,3,false),
+    new CircleMove(Math.PI, 0, 10, 3, false),
+    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
     new Fire(),
     new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 150, 2.5, false),
-    new CircleMove(3 * Math.PI / 4,4 * Math.PI,40,2.5,true),
+    new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 2.5, true),
     new Goto(3)
   ],
   [ // 7 ///////////////////
@@ -718,7 +717,7 @@ Enemies.prototype.movePatterns = [
     new Fire(),
     new CircleMove(0.75 * Math.PI, Math.PI, 112, 4, true),
     new CircleMove(Math.PI, 2.125 * Math.PI, 48, 4, true),
-    new CircleMove(1.125 * Math.PI,  Math.PI, 48, 4, false),
+    new CircleMove(1.125 * Math.PI, Math.PI, 48, 4, false),
     new GotoHome(),
     new HomeMove(),
     new CircleMove(Math.PI, 0, 10, 3, false),
@@ -770,22 +769,22 @@ Enemies.prototype.moveSeqs = [
     [0.03, 0, 176, -15, 80, 3, Zako1, true],
     [0.03, 0, 176, -95, 80, 3, Zako1, true],
 
-    [0.8, 0, 176, 85, 120, 1, MBoss, true,1],
-    [0.03, 0, 176, 95, 100, 1, Zako1, true,1],
-    [0.03, 0, 176, 75, 100, 1, Zako1, true,1],
-    [0.03, 0, 176, 45, 120, 1, MBoss, true,2],
-    [0.03, 0, 176, 55, 100, 1, Zako1, true,2],
-    [0.03, 0, 176, 35, 100, 1, Zako1, true,2],
+    [0.8, 0, 176, 85, 120, 1, MBoss, true, 1],
+    [0.03, 0, 176, 95, 100, 1, Zako1, true, 1],
+    [0.03, 0, 176, 75, 100, 1, Zako1, true, 1],
+    [0.03, 0, 176, 45, 120, 1, MBoss, true, 2],
+    [0.03, 0, 176, 55, 100, 1, Zako1, true, 2],
+    [0.03, 0, 176, 35, 100, 1, Zako1, true, 2],
     [0.03, 0, 176, 65, 120, 1, MBoss, true],
     [0.03, 0, 176, 15, 100, 1, Zako1, true],
     [0.03, 0, 176, 25, 120, 1, MBoss, true],
 
-    [0.8, 0, 176, -85, 120, 3, MBoss, true,3],
-    [0.03, 0, 176, -95, 100, 3, Zako1, true,3],
-    [0.03, 0, 176, -75, 100, 3, Zako1, true,3],
-    [0.03, 0, 176, -45, 120, 3, MBoss, true,4],
-    [0.03, 0, 176, -55, 100, 3, Zako1, true,4],
-    [0.03, 0, 176, -35, 100, 3, Zako1, true,4],
+    [0.8, 0, 176, -85, 120, 3, MBoss, true, 3],
+    [0.03, 0, 176, -95, 100, 3, Zako1, true, 3],
+    [0.03, 0, 176, -75, 100, 3, Zako1, true, 3],
+    [0.03, 0, 176, -45, 120, 3, MBoss, true, 4],
+    [0.03, 0, 176, -55, 100, 3, Zako1, true, 4],
+    [0.03, 0, 176, -35, 100, 3, Zako1, true, 4],
     [0.03, 0, 176, -65, 120, 3, MBoss, true],
     [0.03, 0, 176, -15, 100, 3, Zako1, true],
     [0.03, 0, 176, -25, 120, 3, MBoss, true]

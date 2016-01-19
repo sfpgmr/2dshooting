@@ -23,6 +23,9 @@
       margin-bottom: 0;
       padding: 0;
       border: 0;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
     }
     .error {
       position: relative;
@@ -47,7 +50,7 @@
     body {
       padding: 0;
       border: 0;
-      margin: auto;
+      margin: 0;
     }
 
     .console {
@@ -57,6 +60,25 @@
       margin-right: auto;
       padding: 0;
       border: 0;
+    }
+    
+    .console-debug {
+      text-align: center;
+      box-sizing:border-box;
+      -webkit-box-sizing: border-box;
+      margin-left: 0;
+      margin-right: 0;
+      padding: 0;
+      border: 0;
+    }
+    
+    .debug-ui {
+      border:1px solid black;
+      box-sizing:border-box;
+      -webkit-box-sizing: border-box;
+      margin:0;
+      padding: 0;
+      flex-grow: 1;
     }
 
     .info-display {
@@ -79,6 +101,7 @@
     }
   </style>
 </head>
-<body id="content" class="content">
+<body id="body">
+  <div id="content" class="content"></div>
 </body>
 </html>
