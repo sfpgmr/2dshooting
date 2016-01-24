@@ -39,31 +39,30 @@ export class Bomb extends gameobj.GameObj
     this.y = y;
     this.z = z | 0.00002;
     this.enable_ = true;
-    this.index = 0;
     graphics.updateSpriteUV(this.mesh.geometry, sfg.textureFiles.bomb, 16, 16, this.index);
-    var self = this;
-    sfg.tasks.pushTask(function (i) { self.move(i); });
+    sfg.tasks.pushTask(this.move.bind(this));
     this.mesh.material.opacity = 1.0;
     return true;
   }
   
-  move(taskIndex) {
-    if (!this.delay) {
-      this.mesh.visible = true;
-    } else {
-      this.delay--;
-      return;
+  *move(taskIndex) {
+    
+    for( let i = 0,e = this.delay;i < e && taskIndex >= 0;++i)
+    {
+      taskIndex = yield;      
     }
-    this.index++;
-    if (this.index < 7) {
-      graphics.updateSpriteUV(this.mesh.geometry, sfg.textureFiles.bomb, 16, 16, this.index);
-    } else {
-      this.enable_ = false;
-      this.mesh.visible = false;
-      sfg.tasks.removeTask(taskIndex);
+    this.mesh.visible = true;
+
+    for(let i = 0;i < 7 && taskIndex >= 0;++i)
+    {
+      graphics.updateSpriteUV(this.mesh.geometry, sfg.textureFiles.bomb, 16, 16, i);
+      taskIndex = yield;
     }
+    
+    this.enable_ = false;
+    this.mesh.visible = false;
+    sfg.tasks.removeTask(taskIndex);
   }
- 
 }
 
 export class Bombs {

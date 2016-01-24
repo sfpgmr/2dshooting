@@ -49,25 +49,21 @@ export class EnemyBullet extends gameobj.GameObj {
     this.mesh.visible = v;
   }
   
-  move(taskIndex) {
-    if (this.status == this.NONE)
+  *move(taskIndex) {
+    for(;this.x >= (sfg.V_LEFT - 16) &&
+        this.x <= (sfg.V_RIGHT + 16) &&
+        this.y >= (sfg.V_BOTTOM - 16) &&
+        this.y <= (sfg.V_TOP + 16) && taskIndex >= 0;
+        this.x += this.dx,this.y += this.dy)
     {
-      debugger;
+      taskIndex = yield;
     }
 
-    this.x = this.x + this.dx;
-    this.y = this.y + this.dy;
-
-    if(this.x < (sfg.V_LEFT - 16) ||
-       this.x > (sfg.V_RIGHT + 16) ||
-       this.y < (sfg.V_BOTTOM - 16) ||
-       this.y > (sfg.V_TOP + 16)) {
-       this.mesh.visible = false;
-       this.status = this.NONE;
-       this.enable = false;
-       sfg.tasks.removeTask(taskIndex);
-    }
-   }
+    this.mesh.visible = false;
+    this.status = this.NONE;
+    this.enable = false;
+    sfg.tasks.removeTask(taskIndex);
+  }
    
   start(x, y, z) {
     if (this.enable) {
@@ -88,10 +84,10 @@ export class EnemyBullet extends gameobj.GameObj {
     this.dy = Math.sin(aimRadian) * (this.speed + sfg.stage.difficulty);
 //    console.log('dx:' + this.dx + ' dy:' + this.dy);
 
-    var enb = this;
-    this.task = sfg.tasks.pushTask(enb.move.bind(enb));
+    this.task = sfg.tasks.pushTask(this.move.bind(this));
     return true;
   }
+ 
   hit() {
     this.enable = false;
     sfg.tasks.removeTask(this.task.index);
@@ -122,10 +118,10 @@ export class EnemyBullets {
   {
     var ebs = this.enemyBullets;
     for (var i = 0, end = ebs.length; i < end; ++i) {
-      if (ebs[i].enable) {
-        ebs[i].enable = false;
-        ebs[i].status = ebs[i].NONE;
-        sfg.tasks.removeTask(ebs[i].task.index);
+      let eb = ebs[i];
+      if (eb.enable) {
+        // タスクのキャンセル
+        sfg.tasks[eb.task.index].next(true);
       }
     }
   }
@@ -142,29 +138,28 @@ class LineMove {
     this.dx = Math.cos(rad) * speed;
     this.dy = Math.sin(rad) * speed;
   }
-  start(self, x, y) {
-    self.moveEnd = false;
-    self.step = this.step;
+  
+  *move(self,x,y) 
+  {
+    
     if (self.xrev) {
-      self.charRad = PI - (this.rad - PI / 2);
+      self.charRad = Math.PI - (this.rad - Math.PI / 2);
     } else {
-      self.charRad = this.rad - PI / 2;
+      self.charRad = this.rad - Math.PI / 2;
     }
-  }
-
-  move(self) {
-    if (self.moveEnd) {
-      return;
+    
+    let dy = this.dy;
+    let dx = this.dx;
+    const step = this.step;
+    
+    if(self.xrev){
+      dx = -dx;      
     }
-    if (self.xrev) {
-      self.x -= this.dx;
-    } else {
-      self.x += this.dx;
-    }
-    self.y += this.dy;
-    self.step--;
-    if (!self.step) {
-      self.moveEnd = true;
+    let cancel = false;
+    for(let i = 0;i < step && !cancel;++i){
+      self.x += dx;
+      self.y += dy;
+      cancel = yield;
     }
   }
 }
@@ -195,36 +190,36 @@ class CircleMove {
     }
   };
 
-  start(self, x, y) {
-    self.moveEnd = false;
-    self.step = 0;
+  
+  *move(self,x,y) {
+    // 初期化
+    let sx,sy;
     if (self.xrev) {
-      self.sx = x - this.r * Math.cos(this.startRad + Math.PI);
+      sx = x - this.r * Math.cos(this.startRad + Math.PI);
     } else {
-      self.sx = x - this.r * Math.cos(this.startRad);
+      sx = x - this.r * Math.cos(this.startRad);
     }
-    self.sy = y - this.r * Math.sin(this.startRad);
-    self.z = 0.0;
-    return true;
-  }
-  move(self) {
-    if (self.moveEnd) {
-      return;
-    }
-    var delta = this.deltas[self.step];
+    sy = y - this.r * Math.sin(this.startRad);
 
-    self.x = self.sx + (self.xrev ? delta.x * -1 : delta.x);
-    self.y = self.sy + delta.y;
-    if (self.xrev) {
-      self.charRad = (Math.PI - delta.rad) + (this.left ? -1 : 0) * Math.PI;
-    } else {
-      self.charRad = delta.rad + (this.left ? 0 : -1) * Math.PI;
-    }
-    self.rad = delta.rad;
-    self.step++;
-    if (self.step >= this.deltas.length) {
-      self.step--;
-      self.moveEnd = true;
+    let cancel = false;
+    // 移動
+    for(let i = 0,e = this.deltas.length;(i < e) && !cancel;++i)
+    {
+      var delta = this.deltas[i];
+      if(self.xrev){
+        self.x = sx - delta.x;
+      } else {
+        self.x = sx + delta.x;
+      }
+
+      self.y = sy + delta.y;
+      if (self.xrev) {
+        self.charRad = (Math.PI - delta.rad) + (this.left ? -1 : 0) * Math.PI;
+      } else {
+        self.charRad = delta.rad + (this.left ? 0 : -1) * Math.PI;
+      }
+      self.rad = delta.rad;
+      cancel = yield;
     }
   }
 }
@@ -232,91 +227,79 @@ class CircleMove {
 /// ホームポジションに戻る
 class GotoHome {
 
-  start(self, x, y) {
-    var rad = Math.atan2(self.homeY - self.y, self.homeX - self.x);
+ *move(self, x, y) {
+    let rad = Math.atan2(self.homeY - self.y, self.homeX - self.x);
+    let speed = 4;
+
     self.charRad = rad - Math.PI / 2;
-    self.rad = rad;
-    self.speed = 4;
-    self.dx = Math.cos(self.rad) * self.speed;
-    self.dy = Math.sin(self.rad) * self.speed;
-    self.moveEnd = false;
+    let dx = Math.cos(rad) * speed;
+    let dy = Math.sin(rad) * speed;
     self.z = 0.0;
-    return true;
-  }
-  move(self) {
-    if (self.moveEnd) { return; }
-    if (Math.abs(self.x - self.homeX) < 2 && Math.abs(self.y - self.homeY) < 2) {
-      self.charRad = 0;
-      self.rad = Math.PI;
-      self.x = self.homeX;
-      self.y = self.homeY;
-      self.moveEnd = true;
-      if (self.status == self.START) {
-        var groupID = self.groupID;
-        var groupData = self.enemies.groupData;
-        groupData[groupID].push(self);
-        self.enemies.homeEnemiesCount++;
-      }
-      self.status = self.HOME;
-      return;
+    
+    let cancel = false;
+    for(;(Math.abs(self.x - self.homeX) >= 2 || Math.abs(self.y - self.homeY) >= 2) && !cancel
+      ;self.x += dx,self.y += dy)
+    {
+      cancel = yield;
     }
-    self.x += self.dx;
-    self.y += self.dy;
+
+    self.charRad = 0;
+    self.x = self.homeX;
+    self.y = self.homeY;
+    if (self.status == self.START) {
+      var groupID = self.groupID;
+      var groupData = self.enemies.groupData;
+      groupData[groupID].push(self);
+      self.enemies.homeEnemiesCount++;
+    }
+    self.status = self.HOME;
   }
 }
 
-///
+
+/// 待機中の敵の動き
 class HomeMove{
   constructor(){
     this.CENTER_X = 0;
     this.CENTER_Y = 100;
   }
 
-  start(self, x, y) {
-    self.dx = self.homeX - this.CENTER_X;
-    self.dy = self.homeY - this.CENTER_Y;
-    self.moveEnd = false;
+  *move(self, x, y) {
+
+    let dx = self.homeX - this.CENTER_X;
+    let dy = self.homeY - this.CENTER_Y;
     self.z = -0.1;
-    return true;
-  }
-  move(self) {
-    if (self.moveEnd) { return; }
-    if (self.status == self.ATTACK) {
-      self.moveEnd = true;
-      self.mesh.scale.x = 1.0;
-      self.z = 0.0;
-      return;
+
+    while(self.status != self.ATTACK)
+    {
+      self.x = self.homeX + dx * self.enemies.homeDelta;
+      self.y = self.homeY + dy * self.enemies.homeDelta;
+      self.mesh.scale.x = self.enemies.homeDelta2;
+      yield;
     }
-    self.x =  self.homeX + self.dx * self.enemies.homeDelta;
-    self.y = self.homeY + self.dy * self.enemies.homeDelta;
-    self.mesh.scale.x = self.enemies.homeDelta2;
+
+    self.mesh.scale.x = 1.0;
+    self.z = 0.0;
+
   }
 }
 
 /// 指定シーケンスに移動する
 class Goto {
   constructor(pos) { this.pos = pos; };
-  start(self, x, y) {
+  *move(self, x, y) {
     self.index = this.pos - 1;
-    return false;
-  }
-  move(self) {
   }
 }
 
 /// 敵弾発射
 class Fire {
-  start(self, x, y) {
+  *move(self, x, y) {
     let d = (sfg.stage.no / 20) * ( sfg.stage.difficulty);
     if (d > 1) { d = 1.0;}
     if (Math.random() < d) {
       self.enemies.enemyBullets.start(self.x, self.y);
-      self.moveEnd = true;
     }
-    return false;
-  }
-  move(self) {
-    if (self.moveEnd) { return; }
   }
 }
 
@@ -362,24 +345,33 @@ export class Enemy extends gameobj.GameObj {
   set z(v) { this.z_ = this.mesh.position.z = v; }
   
   ///敵の動き
-  move(taskIndex) {
-    if (this.status == this.NONE)
-    {
-      debugger;
-    }
-    var end = false;
-    while (!end) {
-      if (this.moveEnd && this.index < (this.mvPattern.length - 1)) {
-        this.index++;
-        this.mv = this.mvPattern[this.index];
-        end = this.mv.start(this, this.x, this.y);
-      } else {
-        break;
+  *move(taskIndex) {
+    while (taskIndex >= 0){
+      while(!this.mv.next().done && taskIndex >= 0)
+      {
+        this.mesh.scale.x = this.enemies.homeDelta2;
+        this.mesh.rotation.z = this.charRad;
+        taskIndex = yield;
+      };
+
+      if(taskIndex < 0){
+        taskIndex = -(++taskIndex);
+        return;
       }
+
+      let end = false;
+      while (!end) {
+        if (this.index < (this.mvPattern.length - 1)) {
+          this.index++;
+          this.mv = this.mvPattern[this.index].move(this,this.x,this.y);
+          end = !this.mv.next().done;
+        } else {
+          break;
+        }
+      }
+      this.mesh.scale.x = this.enemies.homeDelta2;
+      this.mesh.rotation.z = this.charRad;
     }
-    this.mv.move(this);
-    this.mesh.scale.x = this.enemies.homeDelta2;
-    this.mesh.rotation.z = this.charRad;
   }
   
   /// 初期化
@@ -401,21 +393,23 @@ export class Enemy extends gameobj.GameObj {
     this.mvPattern = mvPattern;
     this.clearTarget = clearTarget || true;
     this.mesh.material.color.setHex(0xFFFFFF);
-    this.mv = mvPattern[0];
-    this.mv.start(this, x, y);
+    this.mv = mvPattern[0].move(this,x,y);
+    //this.mv.start(this, x, y);
     //if (this.status != this.NONE) {
     //  debugger;
     //}
     this.status = this.START;
-    var self = this;
-    this.task = sfg.tasks.pushTask(function (i) { self.move(i); }, 10000);
+    this.task = sfg.tasks.pushTask(this.move.bind(this), 10000);
+    if(this.task.index == 0){
+      debugger;
+    }
     this.mesh.visible = true;
     return true;
   }
   
   hit(mybullet) {
     if (this.hit_ == null) {
-      var life = this.life;
+      let life = this.life;
       this.life -= mybullet.power || 1;
       mybullet.power -= life; 
 //      this.life--;
@@ -431,9 +425,15 @@ export class Enemy extends gameobj.GameObj {
           }
           this.enemies.groupData[this.groupID].goneCount++;
         }
+        if(this.task.index == 0){
+          console.log('hit',this.task.index);
+          debugger;
+        }
+
         this.mesh.visible = false;
         this.enable_ = false;
         this.status = this.NONE;
+        sfg.tasks.array[this.task.index].genInst.next(-(this.task.index + 1));
         sfg.tasks.removeTask(this.task.index);
       } else {
         this.se(2);

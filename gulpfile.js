@@ -10,6 +10,7 @@ var sourcemaps = require('gulp-sourcemaps');
 var browserify = require('browserify');
 var babelify = require('babelify');
 var uglifyify = require('uglifyify');
+var browserSync =require('browser-sync');
 
 // JSのビルド
 gulp.task('js',function(){
@@ -82,10 +83,23 @@ gulp.task('devver',function(){
   gulp.src('./dist/res/*.*').pipe(gulp.dest(destdir + '/res'));
 });
 
-// ウォッチ
-gulp.task('default',['html','js','res'],function(){
-    gulp.watch('./src/js/**/*.js',['js']);
-    gulp.watch('./src/html/*.html',['html']); 
-    gulp.watch('./src/res/**/*.*',['res']);
+gulp.task('browser-sync', function() {
+    browserSync({
+        server: {
+             baseDir: "./dist/"                 ,index  : "index.html"
+        },
+        files:['./dist/**/*.*']
+    });
+});
+
+gulp.task('bs-reload', function () {
+    browserSync.reload();
+});
+
+gulp.task('default',['html','js','res','browser-sync'],function(){
+    watch('./src/js/**/*.js',()=>gulp.start(['js']));
+    watch('./src/html/*.html',()=>gulp.start(['html'])); 
+    watch('./src/res/**/*.*',()=>gulp.start(['res']));
+    watch('./dist/**/*.*',()=>gulp.start(['bs-reload']));
 });
 }();

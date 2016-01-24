@@ -88,7 +88,7 @@ export class Game {
     this.highScores = [];
     this.isHidden = false;
     this.myship_ = null;
-    this.enemies_ = null;
+    this.enemies = null;
     this.enemyBullets = null;
     this.PI = Math.PI;
     this.comm_ = null;
@@ -321,24 +321,7 @@ export class Game {
     // タスクの呼び出し
     // メインに描画
     if (this.start) {
-      requestAnimationFrame(this.main.bind(this));
-    }
-    if (!sfg.pause) {
-      if (!this.isHidden) {
-        try {
-          this.tasks.checkSort();
-          var arr = this.tasks.getArray();
-          for (var i = 0; i < arr.length; ++i) {
-            var task = arr[i];
-            if (task != util.nullTask) {
-              task.func(task.index);
-            }
-          }
-          this.tasks.compress();
-        } catch (e) {
-          this.ExitError(e);
-        }
-      }
+      this.tasks.process(this);
     }
   }
 
@@ -391,19 +374,22 @@ export class Game {
     return loadPromise;
   }
 
-render(taskIndex) {
-  this.renderer.render(this.scene, this.camera);
-  this.textPlane.render();
-  this.stats && this.stats.update();
+*render(taskIndex) {
+  while(true){
+    this.renderer.render(this.scene, this.camera);
+    this.textPlane.render();
+    this.stats && this.stats.update();
+    yield;
+  }
 }
 
-init(taskIndex) {
+*init(taskIndex) {
 
   this.scene = new THREE.Scene();
   this.enemyBullets = new enemies.EnemyBullets(this.scene, this.se.bind(this));
-  this.enemies_ = new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
+  this.enemies = new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
   sfg.bombs = new effectobj.Bombs(this.scene, this.se.bind(this));
-  sfg.stage = new Stage();
+  this.stage = sfg.stage = new Stage();
   this.spaceField = null;
 
   // ハンドルネームの取得
@@ -425,172 +411,172 @@ init(taskIndex) {
     }
   };
 
-
   // scene.add(textPlane.mesh);
 
   //作者名パーティクルを作成
 
   if (!sfg.DEBUG) {
-    {
-      var canvas = document.createElement('canvas');
-      var w = sfg.textureFiles.author.image.width;
-      var h = sfg.textureFiles.author.image.height;
-      canvas.width = w;
-      canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(sfg.textureFiles.author.image, 0, 0);
-      var data = ctx.getImageData(0, 0, w, h);
-      var geometry = new THREE.Geometry();
-
-      geometry.vert_start = [];
-      geometry.vert_end = [];
-
-      {
-        var i = 0;
-
-        for (var y = 0; y < h; ++y) {
-          for (var x = 0; x < w; ++x) {
-            var color = new THREE.Color();
-
-            var r = data.data[i++];
-            var g = data.data[i++];
-            var b = data.data[i++];
-            var a = data.data[i++];
-            if (a != 0) {
-              color.setRGB(r / 255.0, g / 255.0, b / 255.0);
-              var vert = new THREE.Vector3(((x - w / 2.0)), ((y - h / 2)) * -1, 0.0);
-              var vert2 = new THREE.Vector3(1200 * Math.random() - 600, 1200 * Math.random() - 600, 1200 * Math.random() - 600);
-              geometry.vert_start.push(new THREE.Vector3(vert2.x - vert.x, vert2.y - vert.y, vert2.z - vert.z));
-              geometry.vertices.push(vert2);
-              geometry.vert_end.push(vert);
-              geometry.colors.push(color);
-            }
-          }
-        }
-      }
-
-      // マテリアルを作成
-      //var texture = THREE.ImageUtils.loadTexture('images/particle1.png');
-      var material = new THREE.PointsMaterial({size: 20, blending: THREE.AdditiveBlending,
-        transparent: true, vertexColors: true, depthTest: false//, map: texture
-      });
-
-      this.author = new THREE.Points(geometry, material);
-      //    author.position.x author.position.y=  =0.0, 0.0, 0.0);
-
-      //mesh.sortParticles = false;
-      //var mesh1 = new THREE.ParticleSystem();
-      //mesh.scale.x = mesh.scale.y = 8.0;
-
-      this.basicInput.bind();
-      this.scene.add(this.author);
-    }
-
-    this.tasks.setNextTask(taskIndex, this.printAuthor().bind(this));
+    this.basicInput.bind();
+    this.tasks.setNextTask(taskIndex, this.printAuthor.bind(this));
+    return;
   } else {
     this.basicInput.bind();
     this.tasks.setNextTask(taskIndex, this.gameInit.bind(this));
     this.showSpaceField();
+    return;
   }
 }
 
 /// 作者表示
-printAuthor() {
-  var step = 0;
-  var count = 1.0;
-  var wait = 60;
+*printAuthor(taskIndex) {
+  const wait = 60;
   this.basicInput.keyBuffer.length = 0;
-  return (taskIndex)=> {
-
-    // 何かキー入力があった場合は次のタスクへ
+  
+  let nextTask = ()=>{
+    this.scene.remove(this.author);
+    //scene.needsUpdate = true;
+    this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
+  }
+  
+  let checkKeyInput = ()=> {
     if (this.basicInput.keyBuffer.length > 0) {
       this.basicInput.keyBuffer.length = 0;
-      step = 4;
+      nextTask();
+      return true;
     }
+    return false;
+  }  
 
-    switch (step) {
-      // フェード・イン
-      case 0:
-        if (count <= 0.01) {
-          count -= 0.0005;
-        } else {
-          count -= 0.0025;
-        }
-        if (count < 0.0) {
-          this.author.rotation.x = this.author.rotation.y = this.author.rotation.z = 0.0;
-          let end = this.author.geometry.vertices.length;
+  // 初期化
+  var canvas = document.createElement('canvas');
+  var w = sfg.textureFiles.author.image.width;
+  var h = sfg.textureFiles.author.image.height;
+  canvas.width = w;
+  canvas.height = h;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(sfg.textureFiles.author.image, 0, 0);
+  var data = ctx.getImageData(0, 0, w, h);
+  var geometry = new THREE.Geometry();
 
-          for (var i = 0; i < end; ++i) {
-            this.author.geometry.vertices[i].x = this.author.geometry.vert_end[i].x;
-            this.author.geometry.vertices[i].y = this.author.geometry.vert_end[i].y;
-            this.author.geometry.vertices[i].z = this.author.geometry.vert_end[i].z;
-          }
-          this.author.geometry.verticesNeedUpdate = true;
-          step++;
-        } else {
-          let end = this.author.geometry.vertices.length;
-          let v = this.author.geometry.vertices;
-          let d = this.author.geometry.vert_start;
-          let v2 = this.author.geometry.vert_end;
-          for (var i = 0; i < end; ++i) {
-            v[i].x = v2[i].x + d[i].x * count;
-            v[i].y = v2[i].y + d[i].y * count;
-            v[i].z = v2[i].z + d[i].z * count;
-          }
-          this.author.geometry.verticesNeedUpdate = true;
-          this.author.rotation.x = this.author.rotation.y = this.author.rotation.z = count * 4.0;
-          this.author.material.opacity = 1.0;
+  geometry.vert_start = [];
+  geometry.vert_end = [];
+
+  {
+    var i = 0;
+
+    for (var y = 0; y < h; ++y) {
+      for (var x = 0; x < w; ++x) {
+        var color = new THREE.Color();
+
+        var r = data.data[i++];
+        var g = data.data[i++];
+        var b = data.data[i++];
+        var a = data.data[i++];
+        if (a != 0) {
+          color.setRGB(r / 255.0, g / 255.0, b / 255.0);
+          var vert = new THREE.Vector3(((x - w / 2.0)), ((y - h / 2)) * -1, 0.0);
+          var vert2 = new THREE.Vector3(1200 * Math.random() - 600, 1200 * Math.random() - 600, 1200 * Math.random() - 600);
+          geometry.vert_start.push(new THREE.Vector3(vert2.x - vert.x, vert2.y - vert.y, vert2.z - vert.z));
+          geometry.vertices.push(vert2);
+          geometry.vert_end.push(vert);
+          geometry.colors.push(color);
         }
-        break;
-      // 待ち
-      case 1:
-        if (this.author.material.size > 2) {
-          this.author.material.size -= 0.5;
-          this.author.material.needsUpdate = true;
-        }
-        if (! --wait) step++;
-        break;
-      //フェードアウト
-      case 2:
-        count += 0.05;
-        this.author.material.opacity = 1.0 - count;
-        if (count >= 1.0) {
-          count = 1.0;
-          wait = 60;
-          step++;
-        }
-        break;
-      // 少し待ち
-      case 3:
-        if (! --wait) {
-          wait = 60;
-          step++;
-        }
-        break;
-      // 次のタスクへ
-      case 4:
-        {
-          this.scene.remove(this.author);
-          //scene.needsUpdate = true;
-          this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
-        }
-        break;
+      }
     }
+  }
 
-    //progress.render("proccesing", count * 100);
+  // マテリアルを作成
+  //var texture = THREE.ImageUtils.loadTexture('images/particle1.png');
+  var material = new THREE.PointsMaterial({size: 20, blending: THREE.AdditiveBlending,
+    transparent: true, vertexColors: true, depthTest: false//, map: texture
+  });
 
-    //ctx.fillStyle = "rgba(127,127,0,1.0)";
-    //ctx.fillRect(0, 0, CONSOLE_WIDTH, CONSOLE_HEIGHT);
-    //var backup = ctx.globalAlpha;
-    //ctx.globalAlpha = count;
-    //ctx.drawImage(imageFiles.font.image, (CONSOLE_WIDTH - imageFiles.font.image.width) / 2, (CONSOLE_HEIGHT - imageFiles.font.image.height) / 2);
-    //ctx.globalAlpha = backup;
-  };
+  this.author = new THREE.Points(geometry, material);
+  //    author.position.x author.position.y=  =0.0, 0.0, 0.0);
+
+  //mesh.sortParticles = false;
+  //var mesh1 = new THREE.ParticleSystem();
+  //mesh.scale.x = mesh.scale.y = 8.0;
+
+  this.scene.add(this.author);  
+
+ 
+  // 作者表示ステップ１
+  for(let count = 1.0;count > 0;(count <= 0.01)?count -= 0.0005:count -= 0.0025)
+  {
+    // 何かキー入力があった場合は次のタスクへ
+    if(checkKeyInput()){
+      return;
+    }
+    
+    let end = this.author.geometry.vertices.length;
+    let v = this.author.geometry.vertices;
+    let d = this.author.geometry.vert_start;
+    let v2 = this.author.geometry.vert_end;
+    for (var i = 0; i < end; ++i) {
+      v[i].x = v2[i].x + d[i].x * count;
+      v[i].y = v2[i].y + d[i].y * count;
+      v[i].z = v2[i].z + d[i].z * count;
+    }
+    this.author.geometry.verticesNeedUpdate = true;
+    this.author.rotation.x = this.author.rotation.y = this.author.rotation.z = count * 4.0;
+    this.author.material.opacity = 1.0;
+    yield;
+  }
+  this.author.rotation.x = this.author.rotation.y = this.author.rotation.z = 0.0;
+
+  for (let i = 0,e = this.author.geometry.vertices.length; i < e; ++i) {
+    this.author.geometry.vertices[i].x = this.author.geometry.vert_end[i].x;
+    this.author.geometry.vertices[i].y = this.author.geometry.vert_end[i].y;
+    this.author.geometry.vertices[i].z = this.author.geometry.vert_end[i].z;
+  }
+  this.author.geometry.verticesNeedUpdate = true;
+
+  // 待ち
+  for(let i = 0;i < wait;++i){
+    // 何かキー入力があった場合は次のタスクへ
+    if(checkKeyInput()){
+      return;
+    }
+    if (this.author.material.size > 2) {
+      this.author.material.size -= 0.5;
+      this.author.material.needsUpdate = true;
+    }    
+    yield;
+  }
+
+  // フェードアウト
+  for(let count = 0.0;count <= 1.0;count += 0.05)
+  {
+    // 何かキー入力があった場合は次のタスクへ
+    if(checkKeyInput()){
+      return;
+    }
+    this.author.material.opacity = 1.0 - count;
+    this.author.material.needsUpdate = true;
+    
+    yield;
+  }
+
+  this.author.material.opacity = 0.0; 
+  this.author.material.needsUpdate = true;
+
+  // 待ち
+  for(let i = 0;i < wait;++i){
+    // 何かキー入力があった場合は次のタスクへ
+    if(checkKeyInput()){
+      return;
+    }
+    yield;
+  }
+  nextTask();
 }
 
-
 /// タイトル画面初期化 ///
-initTitle(taskIndex) {
+*initTitle(taskIndex) {
+  
+  taskIndex = yield;
+  
   this.basicInput.clear();
 
   // タイトルメッシュの作成・表示 ///
@@ -613,6 +599,7 @@ initTitle(taskIndex) {
   sfg.gameTimer.start();
   this.showTitle.endTime = sfg.gameTimer.elapsedTime + 10/*秒*/;
   this.tasks.setNextTask(taskIndex, this.showTitle.bind(this));
+  return;
 }
 
 /// 背景パーティクル表示
@@ -650,20 +637,24 @@ showSpaceField() {
 }
 
 /// 宇宙空間の表示
-moveSpaceField(taskIndex) {
-  var verts = this.spaceField.geometry.vertices;
-  var endys = this.spaceField.geometry.endy;
-  for (var i = 0, end = verts.length; i < end; ++i) {
-    verts[i].y -= 4;
-    if (verts[i].y < -endys[i]) {
-      verts[i].y = endys[i];
+*moveSpaceField(taskIndex) {
+  while(true){
+    var verts = this.spaceField.geometry.vertices;
+    var endys = this.spaceField.geometry.endy;
+    for (var i = 0, end = verts.length; i < end; ++i) {
+      verts[i].y -= 4;
+      if (verts[i].y < -endys[i]) {
+        verts[i].y = endys[i];
+      }
     }
+    this.spaceField.geometry.verticesNeedUpdate = true;
+    taskIndex = yield;
   }
-  this.spaceField.geometry.verticesNeedUpdate = true;
 }
 
 /// タイトル表示
-showTitle(taskIndex) {
+*showTitle(taskIndex) {
+ while(true){
   sfg.gameTimer.update();
 
   if (this.basicInput.keyCheck.z) {
@@ -674,10 +665,13 @@ showTitle(taskIndex) {
     this.scene.remove(this.title);
     this.tasks.setNextTask(taskIndex, this.initTop10.bind(this));
   }
+  yield;
+ }
 }
 
 /// ハンドルネームのエントリ前初期化
-initHandleName(taskIndex) {
+*initHandleName(taskIndex) {
+  let end = false;
   if (this.editHandleName){
     this.tasks.setNextTask(taskIndex, this.gameInit.bind(this));
   } else {
@@ -714,6 +708,9 @@ initHandleName(taskIndex) {
           this_.textPlane.print(10 + s, 21, '_', new text.TextAttribute(true));
           d3.select(this).on('keyup', null);
           this_.basicInput.bind();
+          // このタスクを終わらせる
+          this_.tasks.array[taskIndex].genInst.next(-(taskIndex + 1));
+          // 次のタスクを設定する
           this_.tasks.setNextTask(taskIndex, this_.gameInit.bind(this_));
           this_.storage.setItem('handleName', this_.editHandleName);
           d3.select('#input-area').remove();
@@ -726,13 +723,13 @@ initHandleName(taskIndex) {
         this_.textPlane.print(10 + s, 21, '_', new text.TextAttribute(true));
       })
       .node().focus();
-    this.tasks.setNextTask(taskIndex, this.inputHandleName.bind(this));
+
+    while(taskIndex >= 0)
+    {
+      taskIndex = yield;
+    }
+    taskIndex = -(++taskIndex);
   }
-}
-
-/// ハンドルネームのエントリ
-inputHandleName(taskIndex) {
-
 }
 
 /// スコア加算
@@ -759,7 +756,9 @@ se(index) {
 }
 
 /// ゲームの初期化
-gameInit(taskIndex) {
+*gameInit(taskIndex) {
+
+  taskIndex = yield;
 
   // オーディオの開始
   this.audio_.start();
@@ -767,7 +766,7 @@ gameInit(taskIndex) {
   this.sequencer.start();
   sfg.stage.reset();
   this.textPlane.cls();
-  this.enemies_.reset();
+  this.enemies.reset();
 
   // 自機の初期化
   this.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
@@ -781,56 +780,64 @@ gameInit(taskIndex) {
 }
 
 /// ステージの初期化
-stageInit(taskIndex) {
+*stageInit(taskIndex) {
+  
+  taskIndex = yield;
+  
   this.textPlane.print(0, 39, 'Stage:' + sfg.stage.no);
   sfg.gameTimer.start();
-  this.enemies_.reset();
-  this.enemies_.start();
-  this.enemies_.calcEnemiesCount(sfg.stage.privateNo);
-  this.enemies_.hitEnemiesCount = 0;
+  this.enemies.reset();
+  this.enemies.start();
+  this.enemies.calcEnemiesCount(sfg.stage.privateNo);
+  this.enemies.hitEnemiesCount = 0;
   this.textPlane.print(8, 15, 'Stage ' + (sfg.stage.no) + ' Start !!', new text.TextAttribute(true));
-  this.stageStart.endTime = sfg.gameTimer.elapsedTime + 2;
   this.tasks.setNextTask(taskIndex, this.stageStart.bind(this));
 }
 
 /// ステージ開始
-stageStart(taskIndex) {
-  sfg.gameTimer.update();
-  sfg.myship_.action(this.basicInput);
-  if (this.stageStart.endTime < sfg.gameTimer.elapsedTime) {
-    this.textPlane.print(8, 15, '                  ', new text.TextAttribute(true));
-    this.tasks.setNextTask(taskIndex, this.gameAction.bind(this), 5000);
+*stageStart(taskIndex) {
+  let endTime = sfg.gameTimer.elapsedTime + 2;
+  while(taskIndex >= 0 && endTime >= sfg.gameTimer.elapsedTime){
+    sfg.gameTimer.update();
+    sfg.myship_.action(this.basicInput);
+    taskIndex = yield;    
   }
+  this.textPlane.print(8, 15, '                  ', new text.TextAttribute(true));
+  this.tasks.setNextTask(taskIndex, this.gameAction.bind(this), 5000);
   this.status = this.STATUS.INGAME;
 }
 
 /// ゲーム中
-gameAction(taskIndex) {
-  this.printScore();
-  sfg.myship_.action(this.basicInput);
-  sfg.gameTimer.update();
-  //console.log(sfg.gameTimer.elapsedTime);
-  this.enemies_.move();
+*gameAction(taskIndex) {
+  while (taskIndex >= 0){
+    this.printScore();
+    sfg.myship_.action(this.basicInput);
+    sfg.gameTimer.update();
+    //console.log(sfg.gameTimer.elapsedTime);
+    this.enemies.move();
 
-  if (!this.processCollision()) {
-    // 面クリアチェック
-    if (this.enemies_.hitEnemiesCount == this.enemies_.totalEnemiesCount) {
-      this.printScore();
-      this.stage.advance();
-      this.tasks.setNextTask(taskIndex, this.stageInit.bind(this));
-    }
-  } else {
-    this.myShipBomb.endTime = sfg.gameTimer.elapsedTime + 3;
-    this.tasks.setNextTask(taskIndex, this.myShipBomb.bind(this));
-  };
-
+    if (!this.processCollision()) {
+      // 面クリアチェック
+      if (this.enemies.hitEnemiesCount == this.enemies.totalEnemiesCount) {
+        this.printScore();
+        this.stage.advance();
+        this.tasks.setNextTask(taskIndex, this.stageInit.bind(this));
+        return;
+      }
+    } else {
+      this.myShipBomb.endTime = sfg.gameTimer.elapsedTime + 3;
+      this.tasks.setNextTask(taskIndex, this.myShipBomb.bind(this));
+      return;
+    };
+    taskIndex = yield; 
+  }
 }
 
 /// 当たり判定
 processCollision(taskIndex) {
   //　自機弾と敵とのあたり判定
   let myBullets = sfg.myship_.myBullets;
-  this.ens = this.enemies_.enemies;
+  this.ens = this.enemies.enemies;
   for (var i = 0, end = myBullets.length; i < end; ++i) {
     let myb = myBullets[i];
     if (myb.enable_) {
@@ -905,42 +912,48 @@ processCollision(taskIndex) {
 }
 
 /// 自機爆発 
-myShipBomb(taskIndex) {
-  sfg.gameTimer.update();
-  this.enemies_.move();
-  if (sfg.gameTimer.elapsedTime > this.myShipBomb.endTime) {
-    sfg.myship_.rest--;
-    if (sfg.myship_.rest == 0) {
-      this.textPlane.print(10, 18, 'GAME OVER', new text.TextAttribute(true));
-      this.printScore();
-      this.textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
-      this.comm_.socket.on('sendRank', this.checkRankIn);
-      this.comm_.sendScore(new ScoreEntry(this.editHandleName, this.score));
-      this.gameOver.endTime = sfg.gameTimer.elapsedTime + 5;
-      this.rank = -1;
-      this.tasks.setNextTask(taskIndex, this.gameOver.bind(this));
-    } else {
-      sfg.myship_.mesh.visible = true;
-      this.textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
-      this.textPlane.print(8, 15, 'Stage ' + (sfg.stage.no) + ' Start !!', new text.TextAttribute(true));
-      this.stageStart.endTime = sfg.gameTimer.elapsedTime + 2;
-      this.tasks.setNextTask(taskIndex, this.stageStart.bind(this));
-    }
+*myShipBomb(taskIndex) {
+  while(sfg.gameTimer.elapsedTime <= this.myShipBomb.endTime && taskIndex >= 0){
+    this.enemies.move();
+    sfg.gameTimer.update();
+    taskIndex = yield;  
+  }
+  sfg.myship_.rest--;
+  if (sfg.myship_.rest == 0) {
+    this.textPlane.print(10, 18, 'GAME OVER', new text.TextAttribute(true));
+    this.printScore();
+    this.textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
+    this.comm_.socket.on('sendRank', this.checkRankIn);
+    this.comm_.sendScore(new ScoreEntry(this.editHandleName, this.score));
+    this.gameOver.endTime = sfg.gameTimer.elapsedTime + 5;
+    this.rank = -1;
+    this.tasks.setNextTask(taskIndex, this.gameOver.bind(this));
+    this.sequencer.stop();
+  } else {
+    sfg.myship_.mesh.visible = true;
+    this.textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
+    this.textPlane.print(8, 15, 'Stage ' + (sfg.stage.no) + ' Start !!', new text.TextAttribute(true));
+    this.stageStart.endTime = sfg.gameTimer.elapsedTime + 2;
+    this.tasks.setNextTask(taskIndex, this.stageStart.bind(this));
   }
 }
 
 /// ゲームオーバー
-gameOver(taskIndex) {
-  sfg.gameTimer.update();
-  if (this.gameOver.endTime < sfg.gameTimer.elapsedTime) {
-    this.textPlane.cls();
-    this.enemies_.reset();
-    this.enemyBullets.reset();
-    if (this.rank >= 0) {
-      this.tasks.setNextTask(taskIndex, this.initTop10.bind(this));
-    } else {
-      this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
-    }
+*gameOver(taskIndex) {
+  while(this.gameOver.endTime >= sfg.gameTimer.elapsedTime && taskIndex >= 0)
+  {
+    sfg.gameTimer.update();
+    taskIndex = yield;
+  }
+  
+
+  this.textPlane.cls();
+  this.enemies.reset();
+  this.enemyBullets.reset();
+  if (this.rank >= 0) {
+    this.tasks.setNextTask(taskIndex, this.initTop10.bind(this));
+  } else {
+    this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
   }
 }
 
@@ -967,20 +980,25 @@ printTop10() {
   }
 }
 
-initTop10(taskIndex) {
+
+*initTop10(taskIndex) {
+  taskIndex = yield;
   this.textPlane.cls();
   this.printTop10();
   this.showTop10.endTime = sfg.gameTimer.elapsedTime + 5;
   this.tasks.setNextTask(taskIndex, this.showTop10.bind(this));
 }
 
-showTop10(taskIndex) {
-  sfg.gameTimer.update();
-  if (this.showTop10.endTime < sfg.gameTimer.elapsedTime || this.basicInput.keyBuffer.length > 0) {
-    this.basicInput.keyBuffer.length = 0;
-    this.textPlane.cls();
-    this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
-  }
+*showTop10(taskIndex) {
+  while(this.showTop10.endTime >= sfg.gameTimer.elapsedTime && this.basicInput.keyBuffer.length == 0 && taskIndex >= 0)
+  {
+    sfg.gameTimer.update();
+    taskIndex = yield;
+  } 
+  
+  this.basicInput.keyBuffer.length = 0;
+  this.textPlane.cls();
+  this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
 }
 }
 

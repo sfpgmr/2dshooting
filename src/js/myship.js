@@ -43,21 +43,25 @@ export class MyBullet extends gameobj.GameObj {
   set y(v) { this.y_ = this.mesh.position.y = v; }
   get z() { return this.z_; }
   set z(v) { this.z_ = this.mesh.position.z = v; }
-  move(taskIndex) {
-    if (!this.enable_) {
-      this.mesh.visible = false;
-      sfg.tasks.removeTask(taskIndex);
-      return;
+  *move(taskIndex) {
+    
+    while (taskIndex >= 0 
+      && this.enable_
+      && this.y <= (sfg.V_TOP + 16) 
+      && this.y >= (sfg.V_BOTTOM - 16) 
+      && this.x <= (sfg.V_RIGHT + 16) 
+      && this.x >= (sfg.V_LEFT - 16))
+    {
+      
+      this.y += this.dy;
+      this.x += this.dx;
+      
+      taskIndex = yield;
     }
 
-    this.y += this.dy;
-    this.x += this.dx;
-
-    if (this.y > (sfg.V_TOP + 16) || this.y < (sfg.V_BOTTOM - 16) || this.x > (sfg.V_RIGHT + 16) || this.x < (sfg.V_LEFT - 16)) {
-      sfg.tasks.removeTask(taskIndex);
-      this.enable_ = this.mesh.visible = false;
-    };
-  }
+    sfg.tasks.removeTask(taskIndex);
+    this.enable_ = this.mesh.visible = false;
+}
 
   start(x, y, z, aimRadian,power) {
     if (this.enable_) {
@@ -72,8 +76,7 @@ export class MyBullet extends gameobj.GameObj {
     this.enable_ = this.mesh.visible = true;
     this.se(0);
     //sequencer.playTracks(soundEffects.soundEffects[0]);
-    var self = this;
-    sfg.tasks.pushTask(function (i) { self.move(i); });
+    sfg.tasks.pushTask(this.move.bind(this));
     return true;
   }
 }

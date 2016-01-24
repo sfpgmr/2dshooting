@@ -1,16 +1,19 @@
 
 "use strict";
+import * as sfg from './global';
 
 export class Task {
-  constructor(func,priority) {
+  constructor(genInst,priority) {
     this.priority = priority || 10000;
-    this.func = func;
+    this.genInst = genInst;
+    // 初期化
+    //this.genInst.next();
     this.index = 0;
   }
   
 }
 
-export var nullTask = new Task(null);
+export var nullTask = new Task((function*(){})());
 
 /// タスク管理
 export class Tasks {
@@ -20,22 +23,28 @@ export class Tasks {
     this.needCompress = false;
   }
   // indexの位置のタスクを置き換える
-  setNextTask(index, func, priority) {
-    var t = new Task(func, priority);
+  setNextTask(index, genInst, priority) 
+  {
+    if(index < 0){
+      index = -(++index);
+    }
+    var t = new Task(genInst(index), priority);
     t.index = index;
     this.array[index] = t;
     this.needSort = true;
   }
 
-  pushTask(func, priority) {
-    var t = new Task(func, priority);
+  pushTask(genInst, priority) {
+    let t;
     for (var i = 0; i < this.array.length; ++i) {
       if (this.array[i] == nullTask) {
+        t = new Task(genInst(i), priority);
         this.array[i] = t;
         t.index = i;
         return t;
       }
     }
+    t = new Task(genInst(this.array.length),priority);
     t.index = this.array.length;
     this.array[this.array.length] = t;
     this.needSort = true;
@@ -67,6 +76,9 @@ export class Tasks {
   }
 
   removeTask(index) {
+    if(index < 0){
+      index = -(++index);
+    }
     this.array[index] = nullTask;
     this.needCompress = true;
   }
@@ -90,9 +102,23 @@ export class Tasks {
     this.needCompress = false;
   }
   
-  process()
+  process(game)
   {
-    
+    requestAnimationFrame(this.process.bind(this,game));
+    if (!sfg.pause) {
+      if (!game.isHidden) {
+        this.checkSort();
+        this.array.forEach( (task,i) =>{
+          if (task != nullTask) {
+            if(task.index != i ){
+              debugger;
+            }
+            task.genInst.next(task.index);
+          }
+        });
+        this.compress();
+      }
+    }    
     
   }
 }
