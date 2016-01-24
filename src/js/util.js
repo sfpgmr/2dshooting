@@ -7,7 +7,6 @@ export class Task {
     this.priority = priority || 10000;
     this.genInst = genInst;
     // 初期化
-    //this.genInst.next();
     this.index = 0;
   }
   

@@ -346,6 +346,7 @@ export class Enemy extends gameobj.GameObj {
   
   ///敵の動き
   *move(taskIndex) {
+    taskIndex = yield;
     while (taskIndex >= 0){
       while(!this.mv.next().done && taskIndex >= 0)
       {

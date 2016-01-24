@@ -50,9 +50,9 @@ class Stage {
     this.update();
   }
 
-  update() {
+  update(game) {
     if (this.difficulty < this.DIFFICULTY_MAX) {
-      this.difficulty = 1 + 0.05 * (this.stageNo - 1);
+      this.difficulty = 1 + 0.05 * (this.no - 1);
     }
 
     if (this.privateNo >= this.MAX) {
