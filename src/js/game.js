@@ -734,6 +734,26 @@ showSpaceField() {
 
     while(taskIndex >= 0)
     {
+      this.basicInput.clear();
+      if(this.basicInput.aButton || this.basicInput.start)
+      {
+          var inputArea = d3.select('#input-area');
+          var inputNode = inputArea.node();
+          this.editHandleName = inputNode.value;
+          let s = inputNode.selectionStart;
+          let e = inputNode.selectionEnd;
+          this.textPlane.print(10, 21, this.editHandleName);
+          this.textPlane.print(10 + s, 21, '_', new text.TextAttribute(true));
+          inputArea.on('keyup', null);
+          this.basicInput.bind();
+          // このタスクを終わらせる
+          //this.tasks.array[taskIndex].genInst.next(-(taskIndex + 1));
+          // 次のタスクを設定する
+          this.tasks.setNextTask(taskIndex, this.gameInit.bind(this));
+          this.storage.setItem('handleName', this.editHandleName);
+          inputArea.remove();
+          return;        
+      }
       taskIndex = yield;
     }
     taskIndex = -(++taskIndex);

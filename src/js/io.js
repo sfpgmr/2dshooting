@@ -163,8 +163,14 @@ constructor () {
   }
   
   get start() {
-    let ret = ((!this.startButton || (this.startButton && !this.startButton) ) && this.gamepad && this.gamepad.buttons[9].pressed) ;
-    
+    let ret = ((!this.startButton_ || (this.startButton_ && !this.startButton_) ) && this.gamepad && this.gamepad.buttons[9].pressed) ;
+    this.startButton_ = this.gamepad && this.gamepad.buttons[9].pressed;
+    return ret;
+  }
+  
+  get aButton(){
+     let ret = (((!this.aButton_ || (this.aButton_ && !this.aButton_) ) && this.gamepad && this.gamepad.buttons[0].pressed)) ;
+    this.aButton_ = this.gamepad && this.gamepad.buttons[0].pressed;
     return ret;
   }
   
