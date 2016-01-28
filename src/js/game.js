@@ -128,6 +128,7 @@ export class Game {
         this.scene.remove(this.progress.mesh);
         this.renderer.render(this.scene, this.camera);
         this.tasks.clear();
+        this.tasks.pushTask(this.basicInput.update.bind(this.basicInput));
         this.tasks.pushTask(this.init.bind(this));
         this.tasks.pushTask(this.render.bind(this), 100000);
         this.start = true;
@@ -439,7 +440,7 @@ export class Game {
   }
   
   let checkKeyInput = ()=> {
-    if (this.basicInput.keyBuffer.length > 0) {
+    if (this.basicInput.keyBuffer.length > 0 || this.basicInput.start) {
       this.basicInput.keyBuffer.length = 0;
       nextTask();
       return true;
@@ -595,7 +596,7 @@ export class Game {
   this.scene.add(this.title);
   this.showSpaceField();
   /// テキスト表示
-  this.textPlane.print(3, 25, "Push z key to Start Game", new text.TextAttribute(true));
+  this.textPlane.print(3, 25, "Push z or START button", new text.TextAttribute(true));
   sfg.gameTimer.start();
   this.showTitle.endTime = sfg.gameTimer.elapsedTime + 10/*秒*/;
   this.tasks.setNextTask(taskIndex, this.showTitle.bind(this));
@@ -657,7 +658,7 @@ showSpaceField() {
  while(true){
   sfg.gameTimer.update();
 
-  if (this.basicInput.keyCheck.z) {
+  if (this.basicInput.z || this.basicInput.start ) {
     this.scene.remove(this.title);
     this.tasks.setNextTask(taskIndex, this.initHandleName.bind(this));
   }
@@ -696,7 +697,8 @@ showSpaceField() {
       .on('blur', function () {
         d3.event.preventDefault();
         d3.event.stopImmediatePropagation();
-        setTimeout(function () { this.focus(); }, 10);
+        //let this_ = this;
+        setTimeout( () => { this.focus(); }, 10);
         return false;
       })
       .on('keyup', function() {
@@ -722,7 +724,13 @@ showSpaceField() {
         this_.textPlane.print(10, 21, this_.editHandleName);
         this_.textPlane.print(10 + s, 21, '_', new text.TextAttribute(true));
       })
-      .node().focus();
+      .call(function(){
+        let s = this.node().selectionStart;
+        this_.textPlane.print(10, 21, '           ');
+        this_.textPlane.print(10, 21, this_.editHandleName);
+        this_.textPlane.print(10 + s, 21, '_', new text.TextAttribute(true));
+        this.node().focus();
+      });
 
     while(taskIndex >= 0)
     {

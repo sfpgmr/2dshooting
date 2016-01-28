@@ -142,37 +142,37 @@ export class MyShip extends gameobj.GameObj {
   }
   
   action(basicInput) {
-    if (basicInput.keyCheck.left) {
+    if (basicInput.left) {
       if (this.x > this.left) {
         this.x -= 2;
       }
     }
 
-    if (basicInput.keyCheck.right) {
+    if (basicInput.right) {
       if (this.x < this.right) {
         this.x += 2;
       }
     }
 
-    if (basicInput.keyCheck.up) {
+    if (basicInput.up) {
       if (this.y < this.top) {
         this.y += 2;
       }
     }
 
-    if (basicInput.keyCheck.down) {
+    if (basicInput.down) {
       if (this.y > this.bottom) {
         this.y -= 2;
       }
     }
 
 
-    if (basicInput.keyCheck.z) {
+    if (basicInput.z) {
       basicInput.keyCheck.z = false;
       this.shoot(0.5 * Math.PI);
     }
 
-    if (basicInput.keyCheck.x) {
+    if (basicInput.x) {
       basicInput.keyCheck.x = false;
       this.shoot(1.5 * Math.PI);
     }

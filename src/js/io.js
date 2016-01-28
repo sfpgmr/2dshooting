@@ -2,22 +2,35 @@
 import * as sfg from './global'; 
 
 // キー入力
-export function BasicInput() {
+export class BasicInput{
+constructor () {
   this.keyCheck = { up: false, down: false, left: false, right: false, z: false ,x:false};
   this.keyBuffer = [];
   this.keyup_ = null;
   this.keydown_ = null;
+  //this.gamepadCheck = { up: false, down: false, left: false, right: false, z: false ,x:false};
+  window.addEventListener('gamepadconnected',(e)=>{
+    this.gamepad = e.gamepad;
+  });
+ 
+  window.addEventListener('gamepaddisconnected',(e)=>{
+    delete this.gamepad;
+  }); 
+ 
+ if(window.navigator.getGamepads){
+   this.gamepad = window.navigator.getGamepads()[0];
+ } 
 }
 
-BasicInput.prototype = {
-  clear: function()
+  clear()
   {
     for(var d in this.keyCheck){
       this.keyCheck[d] = false;
     }
     this.keyBuffer.length = 0;
-  },
-  keydown: function (e) {
+  }
+  
+  keydown(e) {
     var e = d3.event;
     var keyBuffer = this.keyBuffer;
     var keyCheck = this.keyCheck;
@@ -66,8 +79,9 @@ BasicInput.prototype = {
       e.returnValue = false;
       return false;
     }
-  },
-  keyup: function () {
+  }
+  
+  keyup() {
     var e = d3.event;
     var keyBuffer = this.keyBuffer;
     var keyCheck = this.keyCheck;
@@ -111,17 +125,56 @@ BasicInput.prototype = {
       e.returnValue = false;
       return false;
     }
-  },
+  }
   //イベントにバインドする
-  bind:function()
+  bind()
   {
     d3.select('body').on('keydown.basicInput',this.keydown.bind(this));
     d3.select('body').on('keyup.basicInput',this.keyup.bind(this));
-  },
+  }
   // アンバインドする
-  unbind:function()
+  unbind()
   {
     d3.select('body').on('keydown.basicInput',null);
     d3.select('body').on('keyup.basicInput',null);
+  }
+  
+  get up() {
+    return this.keyCheck.up || (this.gamepad && (this.gamepad.buttons[12].pressed || this.gamepad.axes[1] < -0.1));
+  }
+
+  get down() {
+    return this.keyCheck.down || (this.gamepad && (this.gamepad.buttons[13].pressed || this.gamepad.axes[1] > 0.1));
+  }
+
+  get left() {
+    return this.keyCheck.left || (this.gamepad && (this.gamepad.buttons[14].pressed || this.gamepad.axes[0] < -0.1));
+  }
+
+  get right() {
+    return this.keyCheck.right || (this.gamepad && (this.gamepad.buttons[15].pressed || this.gamepad.axes[0] > 0.1));
+  }
+  
+  get z() {
+     let ret = this.keyCheck.z 
+    || (((!this.zButton || (this.zButton && !this.zButton) ) && this.gamepad && this.gamepad.buttons[0].pressed)) ;
+    this.zButton = this.gamepad && this.gamepad.buttons[0].pressed;
+    return ret;
+  }
+  
+  get start() {
+    let ret = ((!this.startButton || (this.startButton && !this.startButton) ) && this.gamepad && this.gamepad.buttons[9].pressed) ;
+    
+    return ret;
+  }
+  
+  *update(taskIndex)
+  {
+    while(taskIndex >= 0){
+      if(window.navigator.getGamepads){
+        this.gamepad = window.navigator.getGamepads()[0];
+      } 
+      taskIndex = yield;     
+    }
   }
 }
