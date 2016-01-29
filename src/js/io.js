@@ -39,6 +39,15 @@ constructor () {
     if (keyBuffer.length > 16) {
       keyBuffer.shift();
     }
+    
+    if (e.keyCode == 80 /* P */) {
+      if (!sfg.pause) {
+        sfg.game.pause();
+      } else {
+        sfg.game.resume();
+      }
+    }
+          
     keyBuffer.push(e.keyCode);
     switch (e.keyCode) {
       case 74:
