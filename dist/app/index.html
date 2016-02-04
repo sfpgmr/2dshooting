@@ -6,6 +6,12 @@
   <meta name="description" content="WebGL,HTML5,three.js" />
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="./css/style.css">
+  <script>
+    if(module){
+      window.mod = module;
+      delete window.module;
+    }
+  </script>
   <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.12/d3.min.js"></script>
   <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js"></script>
   <script type="text/javascript" src="http://mrdoob.github.io/three.js/examples/js/Detector.js"></script>
@@ -14,6 +20,13 @@
   <!-- <script type="text/javascript" src="http://www.sfpgmr.net:8081/socket.io/socket.io.js"></script> -->
   <script type="text/javascript" src="./js/dsp.js"></script>
   <script type="text/javascript" src="./js/bundle.js"></script>
+  <script>
+    if(window.mod)
+    {
+      window.module = window.mod;
+      delete window.mod;
+    }
+  </script>
 </head>
 
 <body id="body">

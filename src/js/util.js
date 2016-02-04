@@ -1,6 +1,7 @@
 
 "use strict";
 import * as sfg from './global';
+import EventEmitter from './eventEmitter3';
 
 export class Task {
   constructor(genInst,priority) {
@@ -15,17 +16,23 @@ export class Task {
 export var nullTask = new Task((function*(){})());
 
 /// タスク管理
-export class Tasks {
+export class Tasks extends EventEmitter {
   constructor(){
+    super();
     this.array = new Array(0);
     this.needSort = false;
     this.needCompress = false;
+    this.enable = true;
+    this.stopped = false;
   }
   // indexの位置のタスクを置き換える
   setNextTask(index, genInst, priority) 
   {
     if(index < 0){
       index = -(++index);
+    }
+    if(this.array[index].priority == 100000){
+      debugger;
     }
     var t = new Task(genInst(index), priority);
     t.index = index;
@@ -78,6 +85,9 @@ export class Tasks {
     if(index < 0){
       index = -(++index);
     }
+    if(this.array[index].priority == 100000){
+      debugger;
+    }
     this.array[index] = nullTask;
     this.needCompress = true;
   }
@@ -89,36 +99,49 @@ export class Tasks {
     var dest = [];
     var src = this.array;
     var destIndex = 0;
-    for (var i = 0, end = src.length; i < end; ++i) {
-      var s = src[i];
-      if (s != nullTask) {
-        s.index = destIndex;
-        dest.push(s);
-        destIndex++;
+    dest = src.filter((v,i)=>{
+      let ret = v != nullTask;
+      if(ret){
+        v.index = destIndex++;
       }
-    }
+      return ret;
+    });
     this.array = dest;
     this.needCompress = false;
   }
   
   process(game)
   {
-    requestAnimationFrame(this.process.bind(this,game));
-    if (!sfg.pause) {
-      if (!game.isHidden) {
-        this.checkSort();
-        this.array.forEach( (task,i) =>{
-          if (task != nullTask) {
-            if(task.index != i ){
-              debugger;
+    if(this.enable){
+      requestAnimationFrame(this.process.bind(this,game));
+      this.stopped = false;
+      if (!sfg.pause) {
+        if (!game.isHidden) {
+          this.checkSort();
+          this.array.forEach( (task,i) =>{
+            if (task != nullTask) {
+              if(task.index != i ){
+                debugger;
+              }
+              task.genInst.next(task.index);
             }
-            task.genInst.next(task.index);
-          }
-        });
-        this.compress();
-      }
-    }    
-    
+          });
+          this.compress();
+        }
+      }    
+    } else {
+      this.emit('stopped');
+      this.stopped = true;
+    }
+  }
+  
+  stopProcess(){
+    return new Promise((resolve,reject)=>{
+      this.enable = false;
+      this.on('stopped',()=>{
+        resolve();
+      });
+    });
   }
 }
 

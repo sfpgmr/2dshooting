@@ -59,6 +59,7 @@ export class MyBullet extends gameobj.GameObj {
       taskIndex = yield;
     }
 
+    taskIndex = yield;
     sfg.tasks.removeTask(taskIndex);
     this.enable_ = this.mesh.visible = false;
 }
@@ -76,7 +77,7 @@ export class MyBullet extends gameobj.GameObj {
     this.enable_ = this.mesh.visible = true;
     this.se(0);
     //sequencer.playTracks(soundEffects.soundEffects[0]);
-    sfg.tasks.pushTask(this.move.bind(this));
+    this.task = sfg.tasks.pushTask(this.move.bind(this));
     return true;
   }
 }
@@ -182,6 +183,20 @@ export class MyShip extends gameobj.GameObj {
     this.mesh.visible = false;
     sfg.bombs.start(this.x, this.y, 0.2);
     this.se(4);
+  }
+  
+  reset(){
+    this.myBullets.forEach((d)=>{
+      if(d.enable_){
+        while(!sfg.tasks.array[d.task.index].genInst.next(-(1 + d.task.index)).done);
+      }
+    });
+  }
+  
+  init(){
+      this.x = 0;
+      this.y = -100;
+      this.z = 0.1;
   }
 
 }

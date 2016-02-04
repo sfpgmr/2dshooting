@@ -12,7 +12,7 @@ import * as gameobj from './gameobj';
 import * as myship from './myship';
 import * as enemies from './enemies';
 import * as effectobj from './effectobj';
-import { DevTool } from './devtool';
+import EventEmitter from './eventEmitter3';
 
 
 class ScoreEntry {
@@ -23,8 +23,9 @@ class ScoreEntry {
 }
 
 
-class Stage {
+class Stage extends EventEmitter {
   constructor() {
+    super();
     this.MAX = 1;
     this.DIFFICULTY_MAX = 2.0;
     this.no = 1;
@@ -50,7 +51,7 @@ class Stage {
     this.update();
   }
 
-  update(game) {
+  update() {
     if (this.difficulty < this.DIFFICULTY_MAX) {
       this.difficulty = 1 + 0.05 * (this.no - 1);
     }
@@ -59,6 +60,7 @@ class Stage {
       this.privateNo = 0;
   //    this.no = 1;
     }
+    this.emit('update',this);
   }
 }
 
@@ -66,6 +68,7 @@ export class Game {
   constructor() {
     this.CONSOLE_WIDTH = 0;
     this.CONSOLE_HEIGHT = 0;
+    this.RENDERER_PRIORITY = 100000 | 0;
     this.renderer = null;
     this.stats = null;
     this.scene = null;
@@ -98,14 +101,13 @@ export class Game {
     this.soundEffects = null;
     this.ens = null;
     this.enbs = null;
-    this.DevTool = new DevTool(this);
+    this.stage = sfg.stage = new Stage();
     this.title = null;// タイトルメッシュ
     this.spaceField = null;// 宇宙空間パーティクル
     this.editHandleName = null;
     sfg.addScore = this.addScore.bind(this);
     this.checkVisibilityAPI();
     this.audio_ = new audio.Audio();
-    this.status = null;
   }
 
   exec() {
@@ -130,7 +132,6 @@ export class Game {
         this.tasks.clear();
         this.tasks.pushTask(this.basicInput.update.bind(this.basicInput));
         this.tasks.pushTask(this.init.bind(this));
-        this.tasks.pushTask(this.render.bind(this), 100000);
         this.start = true;
         this.main();
       });
@@ -174,7 +175,7 @@ export class Game {
   }
   
   /// コンソール画面の初期化
-  initConsole() {
+  initConsole(consoleClass) {
     // レンダラーの作成
     this.renderer = new THREE.WebGLRenderer({ antialias: false, sortObjects: true });
     var renderer = this.renderer;
@@ -182,27 +183,11 @@ export class Game {
     renderer.setSize(this.CONSOLE_WIDTH, this.CONSOLE_HEIGHT);
     renderer.setClearColor(0, 1);
     renderer.domElement.id = 'console';
-    if(sfg.DEBUG){
-      renderer.domElement.className = 'console-debug';
-    } else {
-      renderer.domElement.className = 'console';
-    }
+    renderer.domElement.className = consoleClass || 'console';
     renderer.domElement.style.zIndex = 0;
 
 
     d3.select('#content').node().appendChild(renderer.domElement);
-    if(sfg.DEBUG){
-        // Stats オブジェクト(FPS表示)の作成表示
-        this.stats = new Stats();
-        this.stats.domElement.style.position = 'absolute';
-        this.stats.domElement.style.top = '0px';
-        this.stats.domElement.style.left = '0px';
-        this.stats.domElement.style.left = renderer.domElement.style.left;
-
-       d3.select('#content').append('div').attr('class','debug-ui').text('test')
-       .style('height',this.CONSOLE_HEIGHT + 'px')
-       .node().appendChild(this.stats.domElement);
-     }       
 
     window.addEventListener('resize', () => {
       this.calcScreenSize();
@@ -224,16 +209,6 @@ export class Game {
 
     //var ambient = new THREE.AmbientLight(0xffffff);
     //scene.add(ambient);
-    if (sfg.DEBUG) {
-      d3.select('body').on('keydown.DevTool', () => {
-        var e = d3.event;
-        if(this.DevTool.keydown.next(e).value){
-          d3.event.preventDefault();
-          d3.event.cancelBubble = true;
-          return false;
-        };
-      });
-    }
     renderer.clear();
   }
 
@@ -376,21 +351,23 @@ export class Game {
   }
 
 *render(taskIndex) {
-  while(true){
+  while(taskIndex >= 0){
     this.renderer.render(this.scene, this.camera);
     this.textPlane.render();
     this.stats && this.stats.update();
-    yield;
+    taskIndex = yield;
   }
 }
 
-*init(taskIndex) {
-
+init_()
+{
   this.scene = new THREE.Scene();
   this.enemyBullets = new enemies.EnemyBullets(this.scene, this.se.bind(this));
   this.enemies = new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
-  sfg.bombs = new effectobj.Bombs(this.scene, this.se.bind(this));
-  this.stage = sfg.stage = new Stage();
+  this.bombs = sfg.bombs = new effectobj.Bombs(this.scene, this.se.bind(this));
+  this.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
+  sfg.myship_ = this.myship_;
+
   this.spaceField = null;
 
   // ハンドルネームの取得
@@ -411,21 +388,15 @@ export class Game {
       this.printScore();
     }
   };
+  
+}
 
-  // scene.add(textPlane.mesh);
-
-  //作者名パーティクルを作成
-
-  if (!sfg.DEBUG) {
+*init(taskIndex) {
+    taskIndex = yield;
+    this.init_();
     this.basicInput.bind();
+    this.tasks.pushTask(this.render.bind(this), this.RENDERER_PRIORITY);
     this.tasks.setNextTask(taskIndex, this.printAuthor.bind(this));
-    return;
-  } else {
-    this.basicInput.bind();
-    this.tasks.setNextTask(taskIndex, this.gameInit.bind(this));
-    this.showSpaceField();
-    return;
-  }
 }
 
 /// 作者表示
@@ -797,8 +768,7 @@ se(index) {
   this.enemies.reset();
 
   // 自機の初期化
-  this.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
-  sfg.myship_ = this.myship_;
+  this.myship_.init();
   sfg.gameTimer.start();
   this.score = 0;
   this.textPlane.print(2, 0, 'Score    High Score');
@@ -832,7 +802,6 @@ se(index) {
   }
   this.textPlane.print(8, 15, '                  ', new text.TextAttribute(true));
   this.tasks.setNextTask(taskIndex, this.gameAction.bind(this), 5000);
-  this.status = this.STATUS.INGAME;
 }
 
 /// ゲーム中
@@ -1029,10 +998,6 @@ printTop10() {
   this.tasks.setNextTask(taskIndex, this.initTitle.bind(this));
 }
 }
-
-Game.prototype.STATUS = {
-  INGAME:1
-};
 
 
 

@@ -12,7 +12,6 @@ import * as gameobj from './gameobj';
 import * as myship from './myship';
 import * as enemies from './enemies';
 import * as effectobj from './effectobj';
-import { DevTool } from './devtool';
 import { Game } from './game';
 
 /// メイン

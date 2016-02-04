@@ -40,7 +40,7 @@ export class Bomb extends gameobj.GameObj
     this.z = z | 0.00002;
     this.enable_ = true;
     graphics.updateSpriteUV(this.mesh.geometry, sfg.textureFiles.bomb, 16, 16, this.index);
-    sfg.tasks.pushTask(this.move.bind(this));
+    this.task = sfg.tasks.pushTask(this.move.bind(this));
     this.mesh.material.opacity = 1.0;
     return true;
   }
@@ -89,5 +89,12 @@ export class Bombs {
     }
   }
 
+  reset(){
+    this.bombs.forEach((d)=>{
+      if(d.enable_){
+        while(!sfg.tasks.array[d.task.index].genInst.next(-(1+d.task.index)).done);
+      }
+    });
+  }
 }
 

@@ -58,7 +58,10 @@ export class EnemyBullet extends gameobj.GameObj {
     {
       taskIndex = yield;
     }
-
+    
+    if(taskIndex >= 0){
+      taskIndex = yield;
+    }
     this.mesh.visible = false;
     this.status = this.NONE;
     this.enable = false;
@@ -116,14 +119,11 @@ export class EnemyBullets {
   
   reset()
   {
-    var ebs = this.enemyBullets;
-    for (var i = 0, end = ebs.length; i < end; ++i) {
-      let eb = ebs[i];
-      if (eb.enable) {
-        // タスクのキャンセル
-        sfg.tasks[eb.task.index].next(true);
+    this.enemyBullets.forEach((d,i)=>{
+      if(d.enable){
+        while(!sfg.tasks.array[d.task.index].genInst.next(-(1 + d.task.index)).done);
       }
-    }
+    });
   }
 }
 

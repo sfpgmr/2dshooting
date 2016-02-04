@@ -2,7 +2,7 @@
 
 export class Comm {
   constructor(){
-    var host = window.location.hostname.match(/localhost/ig)?'localhost':'www.sfpgmr.net';
+    var host = window.location.hostname.match(/www\.sfpgmr\.net/ig)?'www.sfpgmr.net':'localhost';
     this.enable = false;
     try {
       this.socket = io.connect('http://' + host + ':8081/test');
