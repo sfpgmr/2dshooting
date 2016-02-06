@@ -367,6 +367,7 @@ init_()
   this.bombs = sfg.bombs = new effectobj.Bombs(this.scene, this.se.bind(this));
   this.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
   sfg.myship_ = this.myship_;
+  this.myship_.mesh.visible = false;
 
   this.spaceField = null;
 
@@ -758,6 +759,7 @@ se(index) {
 *gameInit(taskIndex) {
 
   taskIndex = yield;
+  
 
   // オーディオの開始
   this.audio_.start();

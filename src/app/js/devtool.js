@@ -1,6 +1,8 @@
 "use strict";
 import * as sfg from '../../js/global';
 import * as audio from '../../js/audio';
+import Controller from './controller';
+import EnemyEditor from './enemyEditor';
 
 
 export class DevTool {
@@ -58,6 +60,11 @@ export class DevTool {
       this.tasks.setNextTask(taskIndex, this.stageInit.bind(this)/*gameAction*/);
    
     };
+    game.init = (function*(taskIndex){
+      taskIndex = yield;
+      this.init_();
+    }).bind(game);      
+    
   }
 
   *keydown_() {
@@ -101,72 +108,38 @@ export class DevTool {
     g.stats.domElement.style.left = '0px';
     g.stats.domElement.style.left = parseFloat(g.renderer.domElement.style.left) - parseFloat(g.stats.domElement.style.width) + 'px';
 
-    let debugUi = d3.select('#content')
+    let debugUi = this.debugUi = d3.select('#content')
     .append('div').attr('class','devtool')
     .style('height',g.CONSOLE_HEIGHT + 'px');
     debugUi.node().appendChild(g.stats.domElement);
     
+    // タブ設定
     let menu = debugUi.append('ul').classed('menu',true);
-    menu.selectAll('li').data(['制御','敵','音源','画像'])
+    menu.selectAll('li').data(
+      [{name:'制御',id:'#control',editor:Controller},{name:'敵',id:'#enemy',editor:EnemyEditor}/*,{name:'音源',id:'#audio'},{name:'画像',id:'#graphics'}*/]
+    )
     .enter().append('li')
-    .text((d)=>d)
+    .text((d)=>d.name)
     .on('click',function(d,i){
       var self = this;
       menu.selectAll('li').each(function(d,idx){
          if(self == this){
            d3.select(this).classed('active',true);
+           d3.select(d.id).style('display','block');
          } else {
            d3.select(this).classed('active',false);
+           d3.select(d.id).style('display','none');
          }       
       });
-    });
-    
-    let toggle = this.toggleGame();
-    
-    let controllerData = 
-    [
-      //　ゲームプレイ
-      {
-        name:'play',
-        func(){
-          this.attr('class',toggle.next(false).value);
-        }
+    }).each(function(d,i){
+      if(!i){
+        d3.select(this).classed('active',true);
+        d3.select(d.id).style('display','block');
       }
-    ];
+      d.inst = new d.editor(this_);
+    })
+    ;
     
-    let controller = debugUi.append('div').classed('controller',true);
-    let buttons = controller.selectAll('button').data(controllerData)
-    .enter().append('button');
-    buttons.attr('class',d=>d.name);
-    
-    buttons.on('click',function(d){
-      d.func.apply(d3.select(this));
-    });
-    
-    controller.append('span').text('ステージ').style({'width':'100px','display':'inline-block','text-align':'center'});
-    
-    var stage = controller
-    .append('input')
-    .attr({'type':'text','value':g.stage.no})
-    .style({'width':'40px','text-align':'right'});
-    g.stage.on('update',(d)=>{
-      stage.node().value = d.no;
-    });
-    
-    stage.on('change',function(){
-      let v =  parseInt(this.value);
-      if(g.stage.no != v){
-        g.stage.jump(v);
-      }
-    });
-    // menu.append('li').text('制御').classed('active',true);
-    // menu.append('li').text('敵');
-    // menu.append('li').text('音源');
-    // menu.append('li').text('画像');
-    
-    //debugUi.append('div').text('')
-    
-    // 
 
   }
   

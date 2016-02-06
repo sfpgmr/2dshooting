@@ -57,7 +57,8 @@ gulp.task('js',function(){
 });
 
 gulp.task('devjs',function(){
-    browserify('./src/app/js/devMain.js',{debug:true,extensions: ['.js']})
+    browserify('./src/app/js/devMain.js',{debug:true,extensions: ['.js'],detectGlobals: false,
+    builtins: []})
     .transform(babelify,{"plugins": [
       "transform-es2015-arrow-functions",
       "transform-es2015-block-scoped-functions",
@@ -156,7 +157,8 @@ gulp.task('devver',function(){
 gulp.task('browser-sync', function() {
     browserSync({
         server: {
-             baseDir: "./dist/"                 ,index  : "index.html"
+             baseDir: "./dist/"
+            ,index  : "index.html"
         },
         files:['./dist/**/*.*']
     });

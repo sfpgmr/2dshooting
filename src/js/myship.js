@@ -197,6 +197,7 @@ export class MyShip extends gameobj.GameObj {
       this.x = 0;
       this.y = -100;
       this.z = 0.1;
+      this.mesh.visible = true;
   }
 
 }
