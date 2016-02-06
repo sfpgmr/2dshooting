@@ -162,13 +162,27 @@ class LineMove {
       cancel = yield;
     }
   }
+  
+  toJSON(){
+    return [
+      "LineMove",
+      this.rad,
+      this.speed,
+      this.step
+    ];
+  }
+  
+  static fromArray(array)
+  {
+    return new LineMove(array[1],array[2],array[3]);
+  }
 }
 
 /// 円運動
 class CircleMove {
   constructor(startRad, stopRad, r, speed, left) {
-    this.startRad = startRad || 0;
-    this.stopRad = stopRad || 0;
+    this.startRad = (startRad || 0) * Math.PI;
+    this.stopRad =  (stopRad || 0) * Math.PI ;
     this.r = r || 0;
     this.speed = speed || 0;
     this.left = !left ? false : true;
@@ -222,6 +236,22 @@ class CircleMove {
       cancel = yield;
     }
   }
+  
+  toJSON(){
+    return 
+    [
+      "LineMove",
+      this.startRad,
+      this.stopRad,
+      this.r,
+      this.speed,
+      this.left
+    ];
+  }
+  
+  static fromArray(a){
+    return new CircleMove(a[1],a[2],a[3],a[4],a[5]);
+  }
 }
 
 /// ホームポジションに戻る
@@ -254,6 +284,15 @@ class GotoHome {
     }
     self.status = self.HOME;
   }
+  
+  toJSON(){
+    return ['GotoHome'];
+  }
+  
+  static fromArray(a)
+  {
+    return new GotoHome();
+  }
 }
 
 
@@ -282,6 +321,15 @@ class HomeMove{
     self.z = 0.0;
 
   }
+  
+  toJSON(){
+    return ['HomeMove'];
+  }
+  
+  static fromArray(a)
+  {
+    return new HomeMove();
+  }
 }
 
 /// 指定シーケンスに移動する
@@ -289,6 +337,17 @@ class Goto {
   constructor(pos) { this.pos = pos; };
   *move(self, x, y) {
     self.index = this.pos - 1;
+  }
+  
+  toJSON(){
+    return [
+      'Goto',
+      this.pos
+    ];
+  }
+  
+  static fromArray(a){
+    return new Goto(a[1]);
   }
 }
 
@@ -300,6 +359,15 @@ class Fire {
     if (Math.random() < d) {
       self.enemies.enemyBullets.start(self.x, self.y);
     }
+  }
+  
+  toJSON(){
+    return ['Fire'];
+  }
+  
+  static fromArray(a)
+  {
+    return new Fire();
   }
 }
 
