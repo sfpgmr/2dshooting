@@ -13,7 +13,7 @@ export const PIXEL_SIZE = 1;
 export const ACTUAL_CHAR_SIZE = CHAR_SIZE * PIXEL_SIZE;
 export const SPRITE_SIZE_X = 16.0;
 export const SPRITE_SIZE_Y = 16.0;
-export var CHECK_COLLISION = false;
+export var CHECK_COLLISION = true;
 export var DEBUG = false;
 export var textureFiles = {};
 export var stage;
