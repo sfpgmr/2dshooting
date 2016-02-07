@@ -521,10 +521,20 @@ function Zako(self) {
   graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 7);
 }
 
+Zako.toJSON = function ()
+{
+  return 'Zako';
+}
+
 function Zako1(self) {
   self.score = 100;
   self.life = 1;
   graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 6);
+}
+
+Zako1.toJSON = function ()
+{
+  return 'Zako1';
 }
 
 function MBoss(self) {
@@ -533,6 +543,12 @@ function MBoss(self) {
   self.mesh.blending = THREE.NormalBlending;
   graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 4);
 }
+
+MBoss.toJSON = function ()
+{
+  return 'MBoss';
+}
+
 
 export class Enemies{
   constructor(scene, se, enemyBullets) {
@@ -679,6 +695,7 @@ export class Enemies{
       groupData[i].goneCount = 0;
     }
   }
+  
   loadPatterns(){
     this.movePatterns = [];
     let this_ = this;    
@@ -717,187 +734,32 @@ export class Enemies{
       });
     });
   }
+  
+  loadFormations(){
+    this.moveSeqs = [];
+    let funcs = new Map([
+      ["Zako",Zako],
+      ["Zako1",Zako1],
+      ["MBoss",MBoss]
+    ]);
+    let this_ = this;
+    return new Promise((resolve,reject)=>{
+      d3.json('../res/enemyFormationPattern.json',(err,data)=>{
+        if(err) reject(err);
+        data.forEach((form,i)=>{
+          let stage = [];
+          this.moveSeqs.push(stage);
+          form.forEach((d,i)=>{
+            d[6] = funcs.get(d[6]);
+            stage.push(d);
+          });          
+        });
+        resolve();
+      });
+    });
+  }
 
 }
-
-// Enemies.prototype.movePatterns = [
-//   // 0
-//   [
-//     new CircleMove(1.0, 1.125, 300, 3, true),
-//     new CircleMove(1.125, 1.25, 200, 3, true),
-//     new Fire(),
-//     new CircleMove(1 / 4, -3 , 40, 5, false),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(1.0, 0, 10, 3, false),
-//     new CircleMove(0, -0.125, 200, 3, false),
-//     new Fire(),
-//     new CircleMove(-0.125, -0.25, 150, 2.5, false),
-//     new CircleMove(3 / 4, 4 , 40, 2.5, true),
-//     new Goto(4)
-//   ],// 1
-//   [
-//     new CircleMove(1.0, 1.125 , 300, 5, true),
-//     new CircleMove(1.125, 1.25, 200, 5, true),
-//     new Fire(),
-//     new CircleMove(1 / 4, -3 , 40, 6, false),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(1.0, 0, 10, 3, false),
-//     new CircleMove(0, -0.125 , 200, 3, false),
-//     new Fire(),
-//     new CircleMove(-0.125, -0.25 , 250, 3, false),
-//     new CircleMove(3 / 4, 4 , 40, 3, true),
-//     new Goto(4)
-//   ],// 2
-//   [
-//     new CircleMove(0, -0.125 * 1.0, 300, 3, false),
-//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 200, 3, false),
-//     new Fire(),
-//     new CircleMove(3 * 1.0 / 4, (2 + 0.25) * 1.0, 40, 5, true),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(0, 1.0, 10, 3, true),
-//     new CircleMove(1.0, 1.125 * 1.0, 200, 3, true),
-//     new Fire(),
-//     new CircleMove(1.125 * 1.0, 1.25 * 1.0, 150, 2.5, true),
-//     new CircleMove(0.25 * 1.0, -3 * 1.0, 40, 2.5, false),
-//     new Goto(4)
-//   ],// 3
-//   [
-//     new CircleMove(0, -0.125 * 1.0, 300, 5, false),
-//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 200, 5, false),
-//     new Fire(),
-//     new CircleMove(3 * 1.0 / 4, (4 + 0.25) * 1.0, 40, 6, true),
-//     new Fire(),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(0, 1.0, 10, 3, true),
-//     new CircleMove(1.0, 1.125 * 1.0, 200, 3, true),
-//     new Fire(),
-//     new CircleMove(1.125 * 1.0, 1.25 * 1.0, 150, 3, true),
-//     new CircleMove(0.25 * 1.0, -3 * 1.0, 40, 3, false),
-//     new Goto(4)
-//   ],
-//   [ // 4
-//     new CircleMove(0, -0.25 * 1.0, 176, 4, false),
-//     new CircleMove(0.75 * 1.0, 1.0, 112, 4, true),
-//     new CircleMove(1.0, 3.125 * 1.0, 64, 4, true),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(0, 0.125 * 1.0, 250, 3, true),
-//     new CircleMove(0.125 * 1.0, 1.0, 80, 3, true),
-//     new Fire(),
-//     new CircleMove(1.0, 1.75 * 1.0, 50, 3, true),
-//     new CircleMove(0.75 * 1.0, 0.5 * 1.0, 100, 3, false),
-//     new CircleMove(0.5 * 1.0, -2 * 1.0, 20, 3, false),
-//     new Goto(3)
-//   ],
-//   [// 5
-//     new CircleMove(0, -0.125 * 1.0, 300, 3, false),
-//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 200, 3, false),
-//     new CircleMove(3 * 1.0 / 4, (3) * 1.0, 40, 5, true),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(1.0, 0.875 * 1.0, 250, 3, false),
-//     new CircleMove(0.875 * 1.0, 0, 80, 3, false),
-//     new Fire(),
-//     new CircleMove(0, -0.75 * 1.0, 50, 3, false),
-//     new CircleMove(0.25 * 1.0, 0.5 * 1.0, 100, 3, true),
-//     new CircleMove(0.5 * 1.0, 3 * 1.0, 20, 3, true),
-//     new Goto(3)
-//   ],
-//   [ // 6 ///////////////////////
-//     new CircleMove(1.5 * 1.0, 1.0, 96, 4, false),
-//     new CircleMove(0, 2 * 1.0, 48, 4, true),
-//     new CircleMove(1.0, 0.75 * 1.0, 32, 4, false),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(1.0, 0, 10, 3, false),
-//     new CircleMove(0, -0.125 * 1.0, 200, 3, false),
-//     new Fire(),
-//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 150, 2.5, false),
-//     new CircleMove(3 * 1.0 / 4, 4 * 1.0, 40, 2.5, true),
-//     new Goto(3)
-//   ],
-//   [ // 7 ///////////////////
-//     new CircleMove(0, -0.25 * 1.0, 176, 4, false),
-//     new Fire(),
-//     new CircleMove(0.75 * 1.0, 1.0, 112, 4, true),
-//     new CircleMove(1.0, 2.125 * 1.0, 48, 4, true),
-//     new CircleMove(1.125 * 1.0, 1.0, 48, 4, false),
-//     new GotoHome(),
-//     new HomeMove(),
-//     new CircleMove(1.0, 0, 10, 3, false),
-//     new Fire(),
-//     new CircleMove(0, -0.125 * 1.0, 200, 3, false),
-//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 150, 2.5, false),
-//     new CircleMove(3 * 1.0 / 4, 4 * 1.0, 40, 2.5, true),
-//     new Goto(5)
-//   ]
-// ]
-// ;
-Enemies.prototype.moveSeqs = [
-  [
-    // *** STAGE 1 *** //
-    // interval,start x,start y,home x,home y,move pattern + x反転,clear target,group ID
-    [0.8, 56, 176, 75, 40, 7, Zako, true],
-    [0.04, 56, 176, 35, 40, 7, Zako, true],
-    [0.04, 56, 176, 55, 40, 7, Zako, true],
-    [0.04, 56, 176, 15, 40, 7, Zako, true],
-    [0.04, 56, 176, 75, -120, 4, Zako, true],
-
-    [0.8, -56, 176, -75, 40, -7, Zako, true],
-    [0.04, -56, 176, -35, 40, -7, Zako, true],
-    [0.04, -56, 176, -55, 40, -7, Zako, true],
-    [0.04, -56, 176, -15, 40, -7, Zako, true],
-    [0.04, -56, 176, -75, -120, -4, Zako, true],
-
-    [0.8, 128, -128, 75, 60, 6, Zako, true],
-    [0.04, 128, -128, 35, 60, 6, Zako, true],
-    [0.04, 128, -128, 55, 60, 6, Zako, true],
-    [0.04, 128, -128, 15, 60, 6, Zako, true],
-    [0.04, 128, -128, 95, 60, 6, Zako, true],
-
-    [0.8, -128, -128, -75, 60, -6, Zako, true],
-    [0.04, -128, -128, -35, 60, -6, Zako, true],
-    [0.04, -128, -128, -55, 60, -6, Zako, true],
-    [0.04, -128, -128, -15, 60, -6, Zako, true],
-    [0.04, -128, -128, -95, 60, -6, Zako, true],
-
-    [0.8, 0, 176, 75, 80, 1, Zako1, true],
-    [0.03, 0, 176, 35, 80, 1, Zako1, true],
-    [0.03, 0, 176, 55, 80, 1, Zako1, true],
-    [0.03, 0, 176, 15, 80, 1, Zako1, true],
-    [0.03, 0, 176, 95, 80, 1, Zako1, true],
-
-    [0.8, 0, 176, -75, 80, 3, Zako1, true],
-    [0.03, 0, 176, -35, 80, 3, Zako1, true],
-    [0.03, 0, 176, -55, 80, 3, Zako1, true],
-    [0.03, 0, 176, -15, 80, 3, Zako1, true],
-    [0.03, 0, 176, -95, 80, 3, Zako1, true],
-
-    [0.8, 0, 176, 85, 120, 1, MBoss, true, 1],
-    [0.03, 0, 176, 95, 100, 1, Zako1, true, 1],
-    [0.03, 0, 176, 75, 100, 1, Zako1, true, 1],
-    [0.03, 0, 176, 45, 120, 1, MBoss, true, 2],
-    [0.03, 0, 176, 55, 100, 1, Zako1, true, 2],
-    [0.03, 0, 176, 35, 100, 1, Zako1, true, 2],
-    [0.03, 0, 176, 65, 120, 1, MBoss, true],
-    [0.03, 0, 176, 15, 100, 1, Zako1, true],
-    [0.03, 0, 176, 25, 120, 1, MBoss, true],
-
-    [0.8, 0, 176, -85, 120, 3, MBoss, true, 3],
-    [0.03, 0, 176, -95, 100, 3, Zako1, true, 3],
-    [0.03, 0, 176, -75, 100, 3, Zako1, true, 3],
-    [0.03, 0, 176, -45, 120, 3, MBoss, true, 4],
-    [0.03, 0, 176, -55, 100, 3, Zako1, true, 4],
-    [0.03, 0, 176, -35, 100, 3, Zako1, true, 4],
-    [0.03, 0, 176, -65, 120, 3, MBoss, true],
-    [0.03, 0, 176, -15, 100, 3, Zako1, true],
-    [0.03, 0, 176, -25, 120, 3, MBoss, true]
-  ]
-];
 
 Enemies.prototype.totalEnemiesCount = 0;
 Enemies.prototype.hitEnemiesCount = 0;

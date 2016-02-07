@@ -65,7 +65,7 @@ export class DevTool {
       taskIndex = yield;
       this.initCommAndHighScore();
       this.initActors();
-      fs.writeFile('enemyMovePattern.json',JSON.stringify(this.enemies.movePatterns,null,''),'utf8');
+      fs.writeFileSync('enemyFormationPattern.json',JSON.stringify(this.enemies.moveSeqs,null,''),'utf8');
     }).bind(game);      
 
 

@@ -366,6 +366,7 @@ initActors()
   this.enemyBullets = this.enemyBullets || new enemies.EnemyBullets(this.scene, this.se.bind(this));
   this.enemies = this.enemies || new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
   promises.push(this.enemies.loadPatterns());
+  promises.push(this.enemies.loadFormations());
   this.bombs = sfg.bombs = this.bombs || new effectobj.Bombs(this.scene, this.se.bind(this));
   this.myship_ = this.myship_ || new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
   sfg.myship_ = this.myship_;
