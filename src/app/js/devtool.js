@@ -3,6 +3,7 @@ import * as sfg from '../../js/global';
 import * as audio from '../../js/audio';
 import Controller from './controller';
 import EnemyEditor from './enemyEditor';
+import * as fs from 'fs';
 
 
 export class DevTool {
@@ -62,9 +63,12 @@ export class DevTool {
     };
     game.init = (function*(taskIndex){
       taskIndex = yield;
-      this.init_();
+      this.initCommAndHighScore();
+      this.initActors();
+      fs.writeFile('enemyMovePattern.json',JSON.stringify(this.enemies.movePatterns,null,''),'utf8');
     }).bind(game);      
-    
+
+
   }
 
   *keydown_() {

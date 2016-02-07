@@ -359,18 +359,24 @@ export class Game {
   }
 }
 
-init_()
+initActors()
 {
-  this.scene = new THREE.Scene();
-  this.enemyBullets = new enemies.EnemyBullets(this.scene, this.se.bind(this));
-  this.enemies = new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
-  this.bombs = sfg.bombs = new effectobj.Bombs(this.scene, this.se.bind(this));
-  this.myship_ = new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
+  let promises = [];
+  this.scene = this.scene || new THREE.Scene();
+  this.enemyBullets = this.enemyBullets || new enemies.EnemyBullets(this.scene, this.se.bind(this));
+  this.enemies = this.enemies || new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
+  promises.push(this.enemies.loadPatterns());
+  this.bombs = sfg.bombs = this.bombs || new effectobj.Bombs(this.scene, this.se.bind(this));
+  this.myship_ = this.myship_ || new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
   sfg.myship_ = this.myship_;
   this.myship_.mesh.visible = false;
 
   this.spaceField = null;
+  return Promise.all(promises);
+}
 
+initCommAndHighScore()
+{
   // ハンドルネームの取得
   this.handleName = this.storage.getItem('handleName');
 
@@ -394,10 +400,13 @@ init_()
 
 *init(taskIndex) {
     taskIndex = yield;
-    this.init_();
+    this.initCommAndHighScore();
     this.basicInput.bind();
-    this.tasks.pushTask(this.render.bind(this), this.RENDERER_PRIORITY);
-    this.tasks.setNextTask(taskIndex, this.printAuthor.bind(this));
+    this.initActors()
+    .then(()=>{
+      this.tasks.pushTask(this.render.bind(this), this.RENDERER_PRIORITY);
+      this.tasks.setNextTask(taskIndex, this.printAuthor.bind(this));
+    });
 }
 
 /// 作者表示

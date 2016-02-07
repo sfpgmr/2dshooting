@@ -181,19 +181,22 @@ class LineMove {
 /// 円運動
 class CircleMove {
   constructor(startRad, stopRad, r, speed, left) {
-    this.startRad = (startRad || 0) * Math.PI;
-    this.stopRad =  (stopRad || 0) * Math.PI ;
+    this.startRad = (startRad || 0);
+    this.stopRad =  (stopRad || 0);
     this.r = r || 0;
     this.speed = speed || 0;
     this.left = !left ? false : true;
     this.deltas = [];
-    var rad = this.startRad;
+    this.startRad_ = this.startRad * Math.PI;
+    this.stopRad_ = this.stopRad * Math.PI;
+    var rad = this.startRad_;
     var step = (left ? 1 : -1) * speed / r;
     var end = false;
+    
     while (!end) {
       rad += step;
-      if ((left && (rad >= this.stopRad)) || (!left && rad <= this.stopRad)) {
-        rad = this.stopRad;
+      if ((left && (rad >= this.stopRad_)) || (!left && rad <= this.stopRad_)) {
+        rad = this.stopRad_;
         end = true;
       }
       this.deltas.push({
@@ -209,11 +212,11 @@ class CircleMove {
     // 初期化
     let sx,sy;
     if (self.xrev) {
-      sx = x - this.r * Math.cos(this.startRad + Math.PI);
+      sx = x - this.r * Math.cos(this.startRad_ + Math.PI);
     } else {
-      sx = x - this.r * Math.cos(this.startRad);
+      sx = x - this.r * Math.cos(this.startRad_);
     }
-    sy = y - this.r * Math.sin(this.startRad);
+    sy = y - this.r * Math.sin(this.startRad_);
 
     let cancel = false;
     // 移動
@@ -238,9 +241,7 @@ class CircleMove {
   }
   
   toJSON(){
-    return 
-    [
-      "LineMove",
+    return [ 'CircleMove',
       this.startRad,
       this.stopRad,
       this.r,
@@ -403,8 +404,8 @@ export class Enemy extends gameobj.GameObj {
   this.scene.add(this.mesh);
   this.se = se;
   this.enemies = enemies;
-  
 }
+
   get x() { return this.x_; }
   set x(v) { this.x_ = this.mesh.position.x = v; }
   get y() { return this.y_; }
@@ -678,126 +679,164 @@ export class Enemies{
       groupData[i].goneCount = 0;
     }
   }
+  loadPatterns(){
+    this.movePatterns = [];
+    let this_ = this;    
+    return new Promise((resolve,reject)=>{
+      d3.json('../res/enemyMovePattern.json',(err,data)=>{
+        if(err){
+          reject(err);
+        }
+        data.forEach((comArray,i)=>{
+          let com = [];
+          this.movePatterns.push(com);
+          comArray.forEach((d,i)=>{
+            switch(d[0]){
+              case 'LineMove':
+                com.push(LineMove.fromArray(d));
+                break;
+              case 'CircleMove':
+                com.push(CircleMove.fromArray(d));
+                break;
+              case 'GotoHome':
+                com.push(GotoHome.fromArray(d));
+                break;
+              case 'HomeMove':
+                com.push(HomeMove.fromArray(d));
+                break;
+              case 'Goto':
+                com.push(Goto.fromArray(d));
+                break;
+              case 'Fire':
+                com.push(Fire.fromArray(d));
+                break;
+            }
+          })
+        });
+        resolve();
+      });
+    });
+  }
 
 }
 
-Enemies.prototype.movePatterns = [
-  // 0
-  [
-    new CircleMove(Math.PI, 1.125 * Math.PI, 300, 3, true),
-    new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 200, 3, true),
-    new Fire(),
-    new CircleMove(Math.PI / 4, -3 * Math.PI, 40, 5, false),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(Math.PI, 0, 10, 3, false),
-    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
-    new Fire(),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 150, 2.5, false),
-    new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 2.5, true),
-    new Goto(4)
-  ],// 1
-  [
-    new CircleMove(Math.PI, 1.125 * Math.PI, 300, 5, true),
-    new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 200, 5, true),
-    new Fire(),
-    new CircleMove(Math.PI / 4, -3 * Math.PI, 40, 6, false),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(Math.PI, 0, 10, 3, false),
-    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
-    new Fire(),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 250, 3, false),
-    new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 3, true),
-    new Goto(4)
-  ],// 2
-  [
-    new CircleMove(0, -0.125 * Math.PI, 300, 3, false),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 200, 3, false),
-    new Fire(),
-    new CircleMove(3 * Math.PI / 4, (2 + 0.25) * Math.PI, 40, 5, true),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(0, Math.PI, 10, 3, true),
-    new CircleMove(Math.PI, 1.125 * Math.PI, 200, 3, true),
-    new Fire(),
-    new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 150, 2.5, true),
-    new CircleMove(0.25 * Math.PI, -3 * Math.PI, 40, 2.5, false),
-    new Goto(4)
-  ],// 3
-  [
-    new CircleMove(0, -0.125 * Math.PI, 300, 5, false),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 200, 5, false),
-    new Fire(),
-    new CircleMove(3 * Math.PI / 4, (4 + 0.25) * Math.PI, 40, 6, true),
-    new Fire(),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(0, Math.PI, 10, 3, true),
-    new CircleMove(Math.PI, 1.125 * Math.PI, 200, 3, true),
-    new Fire(),
-    new CircleMove(1.125 * Math.PI, 1.25 * Math.PI, 150, 3, true),
-    new CircleMove(0.25 * Math.PI, -3 * Math.PI, 40, 3, false),
-    new Goto(4)
-  ],
-  [ // 4
-    new CircleMove(0, -0.25 * Math.PI, 176, 4, false),
-    new CircleMove(0.75 * Math.PI, Math.PI, 112, 4, true),
-    new CircleMove(Math.PI, 3.125 * Math.PI, 64, 4, true),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(0, 0.125 * Math.PI, 250, 3, true),
-    new CircleMove(0.125 * Math.PI, Math.PI, 80, 3, true),
-    new Fire(),
-    new CircleMove(Math.PI, 1.75 * Math.PI, 50, 3, true),
-    new CircleMove(0.75 * Math.PI, 0.5 * Math.PI, 100, 3, false),
-    new CircleMove(0.5 * Math.PI, -2 * Math.PI, 20, 3, false),
-    new Goto(3)
-  ],
-  [// 5
-    new CircleMove(0, -0.125 * Math.PI, 300, 3, false),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 200, 3, false),
-    new CircleMove(3 * Math.PI / 4, (3) * Math.PI, 40, 5, true),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(Math.PI, 0.875 * Math.PI, 250, 3, false),
-    new CircleMove(0.875 * Math.PI, 0, 80, 3, false),
-    new Fire(),
-    new CircleMove(0, -0.75 * Math.PI, 50, 3, false),
-    new CircleMove(0.25 * Math.PI, 0.5 * Math.PI, 100, 3, true),
-    new CircleMove(0.5 * Math.PI, 3 * Math.PI, 20, 3, true),
-    new Goto(3)
-  ],
-  [ // 6 ///////////////////////
-    new CircleMove(1.5 * Math.PI, Math.PI, 96, 4, false),
-    new CircleMove(0, 2 * Math.PI, 48, 4, true),
-    new CircleMove(Math.PI, 0.75 * Math.PI, 32, 4, false),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(Math.PI, 0, 10, 3, false),
-    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
-    new Fire(),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 150, 2.5, false),
-    new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 2.5, true),
-    new Goto(3)
-  ],
-  [ // 7 ///////////////////
-    new CircleMove(0, -0.25 * Math.PI, 176, 4, false),
-    new Fire(),
-    new CircleMove(0.75 * Math.PI, Math.PI, 112, 4, true),
-    new CircleMove(Math.PI, 2.125 * Math.PI, 48, 4, true),
-    new CircleMove(1.125 * Math.PI, Math.PI, 48, 4, false),
-    new GotoHome(),
-    new HomeMove(),
-    new CircleMove(Math.PI, 0, 10, 3, false),
-    new Fire(),
-    new CircleMove(0, -0.125 * Math.PI, 200, 3, false),
-    new CircleMove(-0.125 * Math.PI, -0.25 * Math.PI, 150, 2.5, false),
-    new CircleMove(3 * Math.PI / 4, 4 * Math.PI, 40, 2.5, true),
-    new Goto(5)
-  ]
-]
-;
+// Enemies.prototype.movePatterns = [
+//   // 0
+//   [
+//     new CircleMove(1.0, 1.125, 300, 3, true),
+//     new CircleMove(1.125, 1.25, 200, 3, true),
+//     new Fire(),
+//     new CircleMove(1 / 4, -3 , 40, 5, false),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(1.0, 0, 10, 3, false),
+//     new CircleMove(0, -0.125, 200, 3, false),
+//     new Fire(),
+//     new CircleMove(-0.125, -0.25, 150, 2.5, false),
+//     new CircleMove(3 / 4, 4 , 40, 2.5, true),
+//     new Goto(4)
+//   ],// 1
+//   [
+//     new CircleMove(1.0, 1.125 , 300, 5, true),
+//     new CircleMove(1.125, 1.25, 200, 5, true),
+//     new Fire(),
+//     new CircleMove(1 / 4, -3 , 40, 6, false),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(1.0, 0, 10, 3, false),
+//     new CircleMove(0, -0.125 , 200, 3, false),
+//     new Fire(),
+//     new CircleMove(-0.125, -0.25 , 250, 3, false),
+//     new CircleMove(3 / 4, 4 , 40, 3, true),
+//     new Goto(4)
+//   ],// 2
+//   [
+//     new CircleMove(0, -0.125 * 1.0, 300, 3, false),
+//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 200, 3, false),
+//     new Fire(),
+//     new CircleMove(3 * 1.0 / 4, (2 + 0.25) * 1.0, 40, 5, true),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(0, 1.0, 10, 3, true),
+//     new CircleMove(1.0, 1.125 * 1.0, 200, 3, true),
+//     new Fire(),
+//     new CircleMove(1.125 * 1.0, 1.25 * 1.0, 150, 2.5, true),
+//     new CircleMove(0.25 * 1.0, -3 * 1.0, 40, 2.5, false),
+//     new Goto(4)
+//   ],// 3
+//   [
+//     new CircleMove(0, -0.125 * 1.0, 300, 5, false),
+//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 200, 5, false),
+//     new Fire(),
+//     new CircleMove(3 * 1.0 / 4, (4 + 0.25) * 1.0, 40, 6, true),
+//     new Fire(),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(0, 1.0, 10, 3, true),
+//     new CircleMove(1.0, 1.125 * 1.0, 200, 3, true),
+//     new Fire(),
+//     new CircleMove(1.125 * 1.0, 1.25 * 1.0, 150, 3, true),
+//     new CircleMove(0.25 * 1.0, -3 * 1.0, 40, 3, false),
+//     new Goto(4)
+//   ],
+//   [ // 4
+//     new CircleMove(0, -0.25 * 1.0, 176, 4, false),
+//     new CircleMove(0.75 * 1.0, 1.0, 112, 4, true),
+//     new CircleMove(1.0, 3.125 * 1.0, 64, 4, true),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(0, 0.125 * 1.0, 250, 3, true),
+//     new CircleMove(0.125 * 1.0, 1.0, 80, 3, true),
+//     new Fire(),
+//     new CircleMove(1.0, 1.75 * 1.0, 50, 3, true),
+//     new CircleMove(0.75 * 1.0, 0.5 * 1.0, 100, 3, false),
+//     new CircleMove(0.5 * 1.0, -2 * 1.0, 20, 3, false),
+//     new Goto(3)
+//   ],
+//   [// 5
+//     new CircleMove(0, -0.125 * 1.0, 300, 3, false),
+//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 200, 3, false),
+//     new CircleMove(3 * 1.0 / 4, (3) * 1.0, 40, 5, true),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(1.0, 0.875 * 1.0, 250, 3, false),
+//     new CircleMove(0.875 * 1.0, 0, 80, 3, false),
+//     new Fire(),
+//     new CircleMove(0, -0.75 * 1.0, 50, 3, false),
+//     new CircleMove(0.25 * 1.0, 0.5 * 1.0, 100, 3, true),
+//     new CircleMove(0.5 * 1.0, 3 * 1.0, 20, 3, true),
+//     new Goto(3)
+//   ],
+//   [ // 6 ///////////////////////
+//     new CircleMove(1.5 * 1.0, 1.0, 96, 4, false),
+//     new CircleMove(0, 2 * 1.0, 48, 4, true),
+//     new CircleMove(1.0, 0.75 * 1.0, 32, 4, false),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(1.0, 0, 10, 3, false),
+//     new CircleMove(0, -0.125 * 1.0, 200, 3, false),
+//     new Fire(),
+//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 150, 2.5, false),
+//     new CircleMove(3 * 1.0 / 4, 4 * 1.0, 40, 2.5, true),
+//     new Goto(3)
+//   ],
+//   [ // 7 ///////////////////
+//     new CircleMove(0, -0.25 * 1.0, 176, 4, false),
+//     new Fire(),
+//     new CircleMove(0.75 * 1.0, 1.0, 112, 4, true),
+//     new CircleMove(1.0, 2.125 * 1.0, 48, 4, true),
+//     new CircleMove(1.125 * 1.0, 1.0, 48, 4, false),
+//     new GotoHome(),
+//     new HomeMove(),
+//     new CircleMove(1.0, 0, 10, 3, false),
+//     new Fire(),
+//     new CircleMove(0, -0.125 * 1.0, 200, 3, false),
+//     new CircleMove(-0.125 * 1.0, -0.25 * 1.0, 150, 2.5, false),
+//     new CircleMove(3 * 1.0 / 4, 4 * 1.0, 40, 2.5, true),
+//     new Goto(5)
+//   ]
+// ]
+// ;
 Enemies.prototype.moveSeqs = [
   [
     // *** STAGE 1 *** //
