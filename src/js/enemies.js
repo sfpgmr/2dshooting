@@ -700,7 +700,7 @@ export class Enemies{
     this.movePatterns = [];
     let this_ = this;    
     return new Promise((resolve,reject)=>{
-      d3.json('../res/enemyMovePattern.json',(err,data)=>{
+      d3.json('./res/enemyMovePattern.json',(err,data)=>{
         if(err){
           reject(err);
         }
@@ -744,7 +744,7 @@ export class Enemies{
     ]);
     let this_ = this;
     return new Promise((resolve,reject)=>{
-      d3.json('../res/enemyFormationPattern.json',(err,data)=>{
+      d3.json('./res/enemyFormationPattern.json',(err,data)=>{
         if(err) reject(err);
         data.forEach((form,i)=>{
           let stage = [];
