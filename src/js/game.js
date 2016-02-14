@@ -336,7 +336,7 @@ export class Game {
       ((name, texPath) => {
         loadPromise = loadPromise
           .then(() => {
-            return loadTexture('./res/' + texPath);
+            return loadTexture('../res/' + texPath);
           })
           .then((tex) => {
             texCount++;

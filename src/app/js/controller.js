@@ -48,4 +48,12 @@ export default class Controller {
     
     
   }
+  
+  active(){
+    
+  }
+  
+  hide(){
+    
+  }
 }

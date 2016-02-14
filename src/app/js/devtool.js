@@ -61,11 +61,12 @@ export class DevTool {
       this.tasks.setNextTask(taskIndex, this.stageInit.bind(this)/*gameAction*/);
    
     };
+    
     game.init = (function*(taskIndex){
       taskIndex = yield;
       this.initCommAndHighScore();
       this.initActors();
-      fs.writeFileSync('enemyFormationPattern.json',JSON.stringify(this.enemies.moveSeqs,null,''),'utf8');
+      //fs.writeFileSync('enemyFormationPattern.json',JSON.stringify(this.enemies.moveSeqs,null,''),'utf8');
     }).bind(game);      
 
 
@@ -130,17 +131,22 @@ export class DevTool {
          if(self == this){
            d3.select(this).classed('active',true);
            d3.select(d.id).style('display','block');
+           d.inst.active();
          } else {
-           d3.select(this).classed('active',false);
-           d3.select(d.id).style('display','none');
+           if(d3.select(this).classed('active')){
+              d3.select(this).classed('active',false);
+              d3.select(d.id).style('display','none');
+              d.inst.hide();
+           }
          }       
       });
     }).each(function(d,i){
+      d.inst = new d.editor(this_);
       if(!i){
         d3.select(this).classed('active',true);
         d3.select(d.id).style('display','block');
+        d.inst.active();
       }
-      d.inst = new d.editor(this_);
     })
     ;
     

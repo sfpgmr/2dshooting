@@ -110,9 +110,8 @@ gulp.task('postcss', function() {
             autoprefixer({ browsers: ['last 2 versions'] })
         ]))
         .pipe(gulp.dest('./dist/css'))
+        .pipe(gulp.dest('./dist/app/css'))
         .pipe(logger({ beforeEach: '[postcss] wrote: ' }));
-        
-        gulp.src('./dist/css/*.*').pipe(gulp.dest('./dist/app/css'));
 });
 
 //HTMLのコピー
@@ -126,8 +125,8 @@ gulp.task('devhtml',function(){
 
 //リソースのコピー
 gulp.task('res',function(){
-  gulp.src('./src/res/*.*').pipe(gulp.dest('./dist/res'));
-  gulp.src('./src/res/*.*').pipe(gulp.dest('./dist/app/res'));
+  gulp.src('./src/res/*.json').pipe(gulp.dest('./dist/res'));
+  gulp.src('./src/res/*.json').pipe(gulp.dest('./dist/app/res'));
 });
 
 // devverディレクトリへのコピー
@@ -150,7 +149,7 @@ gulp.task('devver',function(){
   
   gulp.src('./dist/*.html').pipe(gulp.dest(destdir));
   gulp.src('./dist/js/*.js').pipe(gulp.dest(destdir + '/js'));
-  gulp.src('./dist/res/*.*').pipe(gulp.dest(destdir + '/res'));
+  gulp.src('./dist/res/*.json').pipe(gulp.dest(destdir + '/res'));
   gulp.src('./dist/css/*.*').pipe(gulp.dest(destdir + '/css'));
 });
 
@@ -179,7 +178,7 @@ gulp.task('devapp',()=>{
 gulp.task('default',['html','devhtml','js','devjs','res','postcss','devapp','browser-sync'],function(){
     watch('./src/js/**/*.js',()=>gulp.start(['js'],['devjs']));
     watch('./src/html/*.html',()=>gulp.start(['html']));
-    watch('./src/res/**/*.*',()=>gulp.start(['res']));
+    watch('./src/res/**/*.json',()=>gulp.start(['res']));
     watch('./src/css/**/*.css',()=>gulp.start(['postcss']));
     watch('./dist/**/*.*',()=>gulp.start(['bs-reload']));
     watch('./src/app/js/*.js',()=>gulp.start(['devjs']));

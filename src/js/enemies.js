@@ -470,9 +470,9 @@ export class Enemy extends gameobj.GameObj {
     //}
     this.status = this.START;
     this.task = sfg.tasks.pushTask(this.move.bind(this), 10000);
-    if(this.task.index == 0){
-      debugger;
-    }
+    // if(this.task.index == 0){
+    //   debugger;
+    // }
     this.mesh.visible = true;
     return true;
   }
@@ -515,7 +515,7 @@ export class Enemy extends gameobj.GameObj {
   }
 }
 
-function Zako(self) {
+export function Zako(self) {
   self.score = 50;
   self.life = 1;
   graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 7);
@@ -526,7 +526,7 @@ Zako.toJSON = function ()
   return 'Zako';
 }
 
-function Zako1(self) {
+export function Zako1(self) {
   self.score = 100;
   self.life = 1;
   graphics.updateSpriteUV(self.mesh.geometry, sfg.textureFiles.enemy, 16, 16, 6);
@@ -537,7 +537,7 @@ Zako1.toJSON = function ()
   return 'Zako1';
 }
 
-function MBoss(self) {
+export function MBoss(self) {
   self.score = 300;
   self.life = 2;
   self.mesh.blending = THREE.NormalBlending;
@@ -557,12 +557,39 @@ export class Enemies{
     this.nextTime = 0;
     this.currentIndex = 0;
     this.enemies = new Array(0);
+    this.homeDelta2 = 1.0;
     for (var i = 0; i < 64; ++i) {
       this.enemies.push(new Enemy(this, scene, se));
     }
     for (var i = 0; i < 5; ++i) {
       this.groupData[i] = new Array(0);
     }
+  }
+  
+  startEnemy_(enemy,data)
+  {
+      enemy.start(data[1], data[2], 0, data[3], data[4], this.movePatterns[Math.abs(data[5])], data[5] < 0, data[6], data[7], data[8] || 0);
+  }
+  
+  startEnemy(data){
+    var enemies = this.enemies;
+    for (var i = 0, e = enemies.length; i < e; ++i) {
+      var enemy = enemies[i];
+      if (!enemy.enable_) {
+        return this.startEnemy_(enemy,data);
+      }
+    }    
+  }
+  
+  startEnemyIndexed(data,index){
+    let en = this.enemies[index];
+    if(en.enable_){
+        sfg.tasks.removeTask(en.task.index);
+        en.status = en.NONE;
+        en.enable_ = false;
+        en.mesh.visible = false;
+    }
+    this.startEnemy_(en,data);
   }
 
   /// 敵編隊の動きをコントロールする
@@ -575,14 +602,7 @@ export class Enemies{
       var data = moveSeqs[sfg.stage.privateNo][this.currentIndex];
       var nextTime = this.nextTime != null ? this.nextTime : data[0];
       if (currentTime >= (this.nextTime + data[0])) {
-        var enemies = this.enemies;
-        for (var i = 0, e = enemies.length; i < e; ++i) {
-          var enemy = enemies[i];
-          if (!enemy.enable_) {
-            enemy.start(data[1], data[2], 0, data[3], data[4], this.movePatterns[Math.abs(data[5])], data[5] < 0, data[6], data[7], data[8] || 0);
-            break;
-          }
-        }
+        this.startEnemy(data);
         this.currentIndex++;
         if (this.currentIndex < len) {
           this.nextTime = currentTime + moveSeqs[sfg.stage.privateNo][this.currentIndex][0];
@@ -737,12 +757,6 @@ export class Enemies{
   
   loadFormations(){
     this.moveSeqs = [];
-    let funcs = new Map([
-      ["Zako",Zako],
-      ["Zako1",Zako1],
-      ["MBoss",MBoss]
-    ]);
-    let this_ = this;
     return new Promise((resolve,reject)=>{
       d3.json('./res/enemyFormationPattern.json',(err,data)=>{
         if(err) reject(err);
@@ -750,7 +764,7 @@ export class Enemies{
           let stage = [];
           this.moveSeqs.push(stage);
           form.forEach((d,i)=>{
-            d[6] = funcs.get(d[6]);
+            d[6] = getEnemyFunc(d[6]);
             stage.push(d);
           });          
         });
@@ -758,7 +772,18 @@ export class Enemies{
       });
     });
   }
+  
+}
 
+var enemyFuncs = new Map([
+      ["Zako",Zako],
+      ["Zako1",Zako1],
+      ["MBoss",MBoss]
+    ]);
+
+export function getEnemyFunc(funcName)
+{
+  return enemyFuncs.get(funcName);
 }
 
 Enemies.prototype.totalEnemiesCount = 0;

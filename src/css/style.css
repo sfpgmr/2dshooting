@@ -1,5 +1,6 @@
     * {
       font-family: 'Meiryo';
+      font-size:12px;
     }
     .content {
       width: 100%;
@@ -138,7 +139,36 @@
             content: '■'
           }
         }
-        
       }
+      #enemy.controller {
+        textarea {
+          width: 98%;
+          font-size:12px;
+          &.formdata {
+            
+          }
+        }
+      }
+      .formation-editor{
+        width:95%;
+        font-size:10px;
+        table {
+          border-collapse: collapse;
+          border:1px solid gray;
+          width:100%;
+          height:120px;
+          margin:5px;
+          th {
+            color:white;
+            background-color: #505050;
+            width:50px;
+          }
+          td {
+            text-align:right;
+            border:1px solid gray;
+          }
+        }
+      } 
     }
+    
     
