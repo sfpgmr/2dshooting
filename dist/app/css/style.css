@@ -158,23 +158,26 @@
       font-size:12px;
 }
     .devtool #enemy.controller textarea.formdata {}
-    .devtool .formation-editor{
+    .devtool .formation-editor,.devtool .movseq-editor {
       width:95%;
       font-size:10px;
 }
-    .devtool .formation-editor table {
+    .devtool .formation-editor table, .devtool .movseq-editor table {
       border-collapse: collapse;
       border:1px solid gray;
       width:100%;
       height:120px;
       margin:5px;
 }
-    .devtool .formation-editor table th {
+    .devtool .formation-editor table tr.selected, .devtool .movseq-editor table tr.selected {
+      background-color:pink;
+}
+    .devtool .formation-editor table th, .devtool .movseq-editor table th {
       color:white;
       background-color: #505050;
       width:50px;
 }
-    .devtool .formation-editor table td {
+    .devtool .formation-editor table td, .devtool .movseq-editor table td {
       text-align:right;
       border:1px solid gray;
 }

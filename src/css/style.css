@@ -149,7 +149,7 @@
           }
         }
       }
-      .formation-editor{
+      .formation-editor,.movseq-editor {
         width:95%;
         font-size:10px;
         table {
@@ -158,6 +158,9 @@
           width:100%;
           height:120px;
           margin:5px;
+          tr.selected {
+            background-color:pink;
+          }
           th {
             color:white;
             background-color: #505050;

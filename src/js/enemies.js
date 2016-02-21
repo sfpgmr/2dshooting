@@ -182,16 +182,16 @@ class LineMove {
 class CircleMove {
   constructor(startRad, stopRad, r, speed, left) {
     this.startRad = (startRad || 0);
-    this.stopRad =  (stopRad || 0);
-    this.r = r || 0;
-    this.speed = speed || 0;
+    this.stopRad =  (stopRad || 1.0);
+    this.r = r || 100;
+    this.speed = speed || 1.0;
     this.left = !left ? false : true;
     this.deltas = [];
     this.startRad_ = this.startRad * Math.PI;
     this.stopRad_ = this.stopRad * Math.PI;
-    var rad = this.startRad_;
-    var step = (left ? 1 : -1) * speed / r;
-    var end = false;
+    let rad = this.startRad_;
+    let step = (left ? 1 : -1) * this.speed / r;
+    let end = false;
     
     while (!end) {
       rad += step;
@@ -728,31 +728,38 @@ export class Enemies{
           let com = [];
           this.movePatterns.push(com);
           comArray.forEach((d,i)=>{
-            switch(d[0]){
-              case 'LineMove':
-                com.push(LineMove.fromArray(d));
-                break;
-              case 'CircleMove':
-                com.push(CircleMove.fromArray(d));
-                break;
-              case 'GotoHome':
-                com.push(GotoHome.fromArray(d));
-                break;
-              case 'HomeMove':
-                com.push(HomeMove.fromArray(d));
-                break;
-              case 'Goto':
-                com.push(Goto.fromArray(d));
-                break;
-              case 'Fire':
-                com.push(Fire.fromArray(d));
-                break;
-            }
+            com.push(this.createMovePatternFromArray(d));
           })
         });
         resolve();
       });
     });
+  }
+  
+  createMovePatternFromArray(arr){
+    let obj;
+    switch(arr[0]){
+      case 'LineMove':
+        obj = LineMove.fromArray(arr);
+        break;
+      case 'CircleMove':
+        obj =  CircleMove.fromArray(arr);
+        break;
+      case 'GotoHome':
+        obj =   GotoHome.fromArray(arr);
+        break;
+      case 'HomeMove':
+        obj =   HomeMove.fromArray(arr);
+        break;
+      case 'Goto':
+        obj =   Goto.fromArray(arr);
+        break;
+      case 'Fire':
+        obj =   Fire.fromArray(arr);
+        break;
+    }
+    return obj;
+//    throw new Error('MovePattern Not Found.');
   }
   
   loadFormations(){
