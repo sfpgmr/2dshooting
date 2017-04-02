@@ -763,7 +763,7 @@ function* doEditor(eventEdit, formEditor) {
         formEditor.lineBuffer = [];
         for(let i = this.selectStartIndex,e = this.selectEndIndex + 1;i< e;++i)
         {
-          formEditor.lineBuffer.push(events[i].concat());
+          formEditor.lineBuffer.push(events[i].clone());
         }
         needDraw = true;
       },
@@ -792,7 +792,7 @@ function* doEditor(eventEdit, formEditor) {
       paste(){
         for(let i = this.count - 1,e = 0;i >= e;--i)
         {
-          events.splice(this.startIndex,0,formEditor.lineBuffer[i].concat());
+          events.splice(this.startIndex,0,formEditor.lineBuffer[i].clone());
         }
       },
       redo(){
@@ -800,6 +800,7 @@ function* doEditor(eventEdit, formEditor) {
       },
       undo(){
         events.splice(this.startIndex,this.count);
+        needDraw = true;
       }
     });
     needDraw = true;

@@ -513,6 +513,7 @@ function* doEditor(eventEdit, formEditor) {
         needDraw = true;
       } 
     }
+    formEditor.enemyEditor.movSeqEditor.patternNo = events[rowIndex + currentEventIndex][5];
     focusEvent();
   }
   
@@ -777,12 +778,14 @@ function* doEditor(eventEdit, formEditor) {
         {
           events.splice(this.startIndex,0,formEditor.lineBuffer[i].concat());
         }
+        needDraw = true;
       },
       redo(){
         this.paste();
       },
       undo(){
         events.splice(this.startIndex,this.count);
+        needDraw = true;
       }
     });
     needDraw = true;

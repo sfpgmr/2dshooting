@@ -163,6 +163,10 @@ class LineMove {
     }
   }
   
+  clone(){
+    return new LineMove(this.rad,this.speed,this.step);
+  }
+  
   toJSON(){
     return [
       "LineMove",
@@ -250,6 +254,10 @@ class CircleMove {
     ];
   }
   
+  clone(){
+    return new CircleMove(this.startRad,this.stopRad,this.r,this.speed,this.left);
+  }
+  
   static fromArray(a){
     return new CircleMove(a[1],a[2],a[3],a[4],a[5]);
   }
@@ -284,6 +292,11 @@ class GotoHome {
       self.enemies.homeEnemiesCount++;
     }
     self.status = self.HOME;
+  }
+  
+  clone()
+  {
+    return new GotoHome();
   }
   
   toJSON(){
@@ -323,6 +336,10 @@ class HomeMove{
 
   }
   
+  clone(){
+    return new HomeMove();
+  }
+  
   toJSON(){
     return ['HomeMove'];
   }
@@ -347,6 +364,10 @@ class Goto {
     ];
   }
   
+  clone(){
+    return new Goto(this.pos);
+  }
+  
   static fromArray(a){
     return new Goto(a[1]);
   }
@@ -360,6 +381,10 @@ class Fire {
     if (Math.random() < d) {
       self.enemies.enemyBullets.start(self.x, self.y);
     }
+  }
+  
+  clone(){
+    return new Fire();
   }
   
   toJSON(){
