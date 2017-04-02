@@ -1,6 +1,6 @@
 "use strict";
 import *  as gameobj from './gameobj.js';
-import {sfg} from './global.js';
+import * as sfg from './global.js'; 
 import * as graphics from './graphics.js';
 
 /// 敵弾
@@ -506,7 +506,7 @@ export class Enemy extends gameobj.GameObj {
     if (this.hit_ == null) {
       let life = this.life;
       this.life -= mybullet.power || 1;
-      mybullet.power -= life; 
+      mybullet.power && (mybullet.power -= life); 
 //      this.life--;
       if (this.life <= 0) {
         sfg.bombs.start(this.x, this.y);

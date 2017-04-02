@@ -5,7 +5,7 @@ export class Comm {
     var host = window.location.hostname.match(/www\.sfpgmr\.net/ig)?'www.sfpgmr.net':'localhost';
     this.enable = false;
     try {
-      this.socket = io.connect('http://' + host + ':8081/test');
+      this.socket = io.connect(window.location.protocol + '//' + host + ':8081/test');
       this.enable = true;
       var self = this;
       this.socket.on('sendHighScores', (data)=>{

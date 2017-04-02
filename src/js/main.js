@@ -1,6 +1,6 @@
 "use strict";
 //var STAGE_MAX = 1;
-import {sfg} from './global.js'; 
+import * as sfg from './global.js'; 
 // import * as util from './util.js';
 // import * as audio from './audio.js';
 // //import * as song from './song';
@@ -17,6 +17,6 @@ import { Game } from './game.js';
 /// メイン
 window.onload = function () {
 
-  sfg.game = new Game();
+  sfg.setGame(new Game());
   sfg.game.exec();
 };

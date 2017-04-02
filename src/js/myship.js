@@ -1,6 +1,6 @@
 "use strict";
 
-import {sfg} from './global.js';
+import * as sfg from './global.js'; 
 import * as gameobj from './gameobj.js';
 import * as graphics from './graphics.js';
 
@@ -197,6 +197,7 @@ export class MyShip extends gameobj.GameObj {
       this.x = 0;
       this.y = -100;
       this.z = 0.1;
+      this.rest = 3;
       this.mesh.visible = true;
   }
 

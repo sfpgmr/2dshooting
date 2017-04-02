@@ -1,5 +1,5 @@
 "use strict";
-import {sfg} from './global.js';
+import * as sfg from './global.js'; 
 
 /// テクスチャーとしてcanvasを使う場合のヘルパー
 export function CanvasTexture(width, height) {

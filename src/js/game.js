@@ -1,6 +1,6 @@
 "use strict";
 //var STAGE_MAX = 1;
-import {sfg} from './global.js';
+import * as sfg from './global.js'; 
 import * as util from './util.js';
 import * as audio from './audio.js';
 //import * as song from './song';
@@ -78,7 +78,7 @@ export class Game {
     this.textPlane = null;
     this.basicInput = new io.BasicInput();
     this.tasks = new util.Tasks();
-    sfg.tasks = this.tasks;
+    sfg.setTasks(this.tasks);
     this.waveGraph = null;
     this.start = false;
     this.baseTime = new Date;
@@ -101,11 +101,12 @@ export class Game {
     this.soundEffects = null;
     this.ens = null;
     this.enbs = null;
-    this.stage = sfg.stage = new Stage();
+    this.stage = new Stage();
+    sfg.setStage(this.stage);
     this.title = null;// タイトルメッシュ
     this.spaceField = null;// 宇宙空間パーティクル
     this.editHandleName = null;
-    sfg.addScore = this.addScore.bind(this);
+    sfg.setAddScore(this.addScore.bind(this));
     this.checkVisibilityAPI();
     this.audio_ = new audio.Audio();
   }
@@ -121,7 +122,7 @@ export class Game {
     this.soundEffects = new audio.SoundEffects(this.sequencer);
 
     document.addEventListener(window.visibilityChange, this.onVisibilityChange.bind(this), false);
-    sfg.gameTimer = new util.GameTimer(this.getCurrentTime.bind(this));
+    sfg.setGameTimer(new util.GameTimer(this.getCurrentTime.bind(this)));
 
     /// ゲームコンソールの初期化
     this.initConsole();
@@ -240,7 +241,7 @@ export class Game {
     if (this.sequencer.status == this.sequencer.PLAY) {
       this.sequencer.pause();
     }
-    sfg.pause = true;
+    sfg.setPause(true);
   }
 
   resume() {
@@ -250,7 +251,7 @@ export class Game {
     if (this.sequencer.status == this.sequencer.PAUSE) {
       this.sequencer.resume();
     }
-    sfg.pause = false;
+    sfg.setPause(false);
   }
 
   /// 現在時間の取得
@@ -367,9 +368,10 @@ initActors()
   this.enemies = this.enemies || new enemies.Enemies(this.scene, this.se.bind(this), this.enemyBullets);
   promises.push(this.enemies.loadPatterns());
   promises.push(this.enemies.loadFormations());
-  this.bombs = sfg.bombs = this.bombs || new effectobj.Bombs(this.scene, this.se.bind(this));
+  this.bombs = this.bombs || new effectobj.Bombs(this.scene, this.se.bind(this));
+  sfg.setBombs(this.bombs);
   this.myship_ = this.myship_ || new myship.MyShip(0, -100, 0.1, this.scene, this.se.bind(this));
-  sfg.myship_ = this.myship_;
+  sfg.setMyShip(this.myship_);
   this.myship_.mesh.visible = false;
 
   this.spaceField = null;
@@ -452,11 +454,11 @@ initCommAndHighScore()
         var color = new THREE.Color();
 
         var r = data.data[i++];
-        var sfg = data.data[i++];
+        var g = data.data[i++];
         var b = data.data[i++];
         var a = data.data[i++];
         if (a != 0) {
-          color.setRGB(r / 255.0, sfg / 255.0, b / 255.0);
+          color.setRGB(r / 255.0, g / 255.0, b / 255.0);
           var vert = new THREE.Vector3(((x - w / 2.0)), ((y - h / 2)) * -1, 0.0);
           var vert2 = new THREE.Vector3(1200 * Math.random() - 600, 1200 * Math.random() - 600, 1200 * Math.random() - 600);
           geometry.vert_start.push(new THREE.Vector3(vert2.x - vert.x, vert2.y - vert.y, vert2.z - vert.z));
@@ -928,12 +930,14 @@ processCollision(taskIndex) {
     taskIndex = yield;  
   }
   sfg.myship_.rest--;
-  if (sfg.myship_.rest == 0) {
+  if (sfg.myship_.rest <= 0) {
     this.textPlane.print(10, 18, 'GAME OVER', new text.TextAttribute(true));
     this.printScore();
     this.textPlane.print(20, 39, 'Rest:   ' + sfg.myship_.rest);
-    this.comm_.socket.on('sendRank', this.checkRankIn);
-    this.comm_.sendScore(new ScoreEntry(this.editHandleName, this.score));
+    if(this.comm_.enable){
+      this.comm_.socket.on('sendRank', this.checkRankIn);
+      this.comm_.sendScore(new ScoreEntry(this.editHandleName, this.score));
+    }
     this.gameOver.endTime = sfg.gameTimer.elapsedTime + 5;
     this.rank = -1;
     this.tasks.setNextTask(taskIndex, this.gameOver.bind(this));

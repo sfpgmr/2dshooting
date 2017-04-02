@@ -1,6 +1,6 @@
 
 "use strict";
-import {sfg} from './global.js';
+import * as sfg from './global.js'; 
 import EventEmitter from './eventEmitter3.js';
 
 export class Task {
