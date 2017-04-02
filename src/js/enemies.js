@@ -1,7 +1,7 @@
 "use strict";
-import *  as gameobj from './gameobj';
-import * as sfg from './global';
-import * as graphics from './graphics';
+import *  as gameobj from './gameobj.js';
+import {sfg} from './global.js';
+import * as graphics from './graphics.js';
 
 /// 敵弾
 export class EnemyBullet extends gameobj.GameObj {

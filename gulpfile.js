@@ -1,51 +1,69 @@
 !function(){
 'use strict';
-var fs = require('fs');
-var gulp = require('gulp');
-var logger = require('gulp-logger');
-var watch = require('gulp-watch');
-var source = require('vinyl-source-stream');
-var plumber = require('gulp-plumber');
-var sourcemaps = require('gulp-sourcemaps');
-var browserify = require('browserify');
-var babelify = require('babelify');
-var uglifyify = require('uglifyify');
-var browserSync =require('browser-sync');
+const fs = require('fs');
+const gulp = require('gulp');
+const logger = require('gulp-logger');
+const watch = require('gulp-watch');
+const source = require('vinyl-source-stream');
+const plumber = require('gulp-plumber');
+const sourcemaps = require('gulp-sourcemaps');
+const browserSync =require('browser-sync');
 
-var postcss = require('gulp-postcss');
-var autoprefixer = require('autoprefixer');
-var atImport = require('postcss-import');
+const rollup = require('rollup').rollup;
+const commonjs = require('rollup-plugin-commonjs');
+const nodeResolve = require('rollup-plugin-node-resolve');
+
+
+const postcss = require('gulp-postcss');
+const autoprefixer = require('autoprefixer');
+const atImport = require('postcss-import');
 
 
 // JSのビルド
 gulp.task('js',function(){
-    browserify('./src/js/main.js',{debug:true,extensions: ['.js']})
-    .transform(babelify,{"plugins": [
-      "transform-es2015-arrow-functions",
-      "transform-es2015-block-scoped-functions",
-      "transform-es2015-block-scoping",
-      "transform-es2015-classes",
-      "transform-es2015-computed-properties",
-//      "transform-es2015-constants",
-      "transform-es2015-destructuring",
-      "transform-es2015-for-of",
-      "transform-es2015-function-name",
-      "transform-es2015-literals",
-      "transform-es2015-modules-commonjs",
-      "transform-es2015-object-super",
-      "transform-es2015-parameters",
-      "transform-es2015-shorthand-properties",
-      "transform-es2015-spread",
-      "transform-es2015-sticky-regex",
-      "transform-es2015-template-literals",
-      "transform-es2015-typeof-symbol",
-      "transform-es2015-unicode-regex"
-      ]})
-//    .transform({global:true},uglifyify)
-    .bundle()
-    .on("error", function (err) { console.log("Error : " + err.message); })
-    .pipe(source('bundle.js'))
-    .pipe(gulp.dest('./dist/js'));
+    rollup({
+    entry: './src/js/main.js',
+    plugins: [
+      nodeResolve({ jsnext: true }),
+      commonjs()
+    ],
+    external:[
+      'sharp','electron','events','tween.js'
+    ]
+  }).then((bundle)=>{
+    bundle.write({
+      format: 'iife',
+      dest: './dist/js/bundle.js',
+            sourceMap: 'inline'
+    });
+  });
+//     browserify('./src/js/main.js',{debug:true,extensions: ['.js']})
+//     .transform(babelify,{"plugins": [
+//       "transform-es2015-arrow-functions",
+//       "transform-es2015-block-scoped-functions",
+//       "transform-es2015-block-scoping",
+//       "transform-es2015-classes",
+//       "transform-es2015-computed-properties",
+// //      "transform-es2015-constants",
+//       "transform-es2015-destructuring",
+//       "transform-es2015-for-of",
+//       "transform-es2015-function-name",
+//       "transform-es2015-literals",
+//       "transform-es2015-modules-commonjs",
+//       "transform-es2015-object-super",
+//       "transform-es2015-parameters",
+//       "transform-es2015-shorthand-properties",
+//       "transform-es2015-spread",
+//       "transform-es2015-sticky-regex",
+//       "transform-es2015-template-literals",
+//       "transform-es2015-typeof-symbol",
+//       "transform-es2015-unicode-regex"
+//       ]})
+// //    .transform({global:true},uglifyify)
+//     .bundle()
+//     .on("error", function (err) { console.log("Error : " + err.message); })
+//     .pipe(source('bundle.js'))
+//     .pipe(gulp.dest('./dist/js'));
 
     try {
       fs.accessSync('./dist/js/dsp.js');
@@ -57,34 +75,50 @@ gulp.task('js',function(){
 });
 
 gulp.task('devjs',function(){
-    browserify('./src/app/js/devMain.js',{debug:true,extensions: ['.js'],detectGlobals: false,
-    builtins: []})
-    .transform(babelify,{"plugins": [
-      "transform-es2015-arrow-functions",
-      "transform-es2015-block-scoped-functions",
-      "transform-es2015-block-scoping",
-      "transform-es2015-classes",
-      "transform-es2015-computed-properties",
-//      "transform-es2015-constants",
-      "transform-es2015-destructuring",
-      "transform-es2015-for-of",
-      "transform-es2015-function-name",
-      "transform-es2015-literals",
-      "transform-es2015-modules-commonjs",
-      "transform-es2015-object-super",
-      "transform-es2015-parameters",
-      "transform-es2015-shorthand-properties",
-      "transform-es2015-spread",
-      "transform-es2015-sticky-regex",
-      "transform-es2015-template-literals",
-      "transform-es2015-typeof-symbol",
-      "transform-es2015-unicode-regex"
-      ]})
-//    .transform({global:true},uglifyify)
-    .bundle()
-    .on("error", function (err) { console.log("Error : " + err.message); })
-    .pipe(source('bundle.js'))
-    .pipe(gulp.dest('./dist/app/js'));
+    rollup({
+    entry: './src/js/devMain.js',
+    plugins: [
+      nodeResolve({ jsnext: true }),
+      commonjs()
+    ],
+    external:[
+      'sharp','electron','events','tween.js'
+    ]
+  }).then((bundle)=>{
+    bundle.write({
+      format: 'iife',
+      dest: 'dist/js/bundle.js'
+    });
+  });  
+//     browserify('./src/app/js/devMain.js',{debug:true,extensions: ['.js'],detectGlobals: false,
+//     builtins: []})
+//     .transform(babelify,{"plugins": [
+//       "transform-es2015-arrow-functions",
+//       "transform-es2015-block-scoped-functions",
+//       "transform-es2015-block-scoping",
+//       "transform-es2015-classes",
+//       "transform-es2015-computed-properties",
+// //      "transform-es2015-constants",
+//       "transform-es2015-destructuring",
+//       "transform-es2015-for-of",
+//       "transform-es2015-function-name",
+//       "transform-es2015-literals",
+//       "transform-es2015-modules-commonjs",
+//       "transform-es2015-object-super",
+//       "transform-es2015-parameters",
+//       "transform-es2015-shorthand-properties",
+//       "transform-es2015-spread",
+//       "transform-es2015-sticky-regex",
+//       "transform-es2015-template-literals",
+//       "transform-es2015-typeof-symbol",
+//       "transform-es2015-unicode-regex"
+//       ]})
+// //    .transform({global:true},uglifyify)
+//     .bundle()
+//     .on("error", function (err) { console.log("Error : " + err.message); })
+//     .pipe(source('bundle.js'))
+//     .pipe(gulp.dest('./dist/app/js'));
+
     try {
       fs.accessSync('./dist/app/js/dsp.js');
     } catch (e) {

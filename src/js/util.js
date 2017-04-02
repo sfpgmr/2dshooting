@@ -1,7 +1,7 @@
 
 "use strict";
-import * as sfg from './global';
-import EventEmitter from './eventEmitter3';
+import {sfg} from './global.js';
+import EventEmitter from './eventEmitter3.js';
 
 export class Task {
   constructor(genInst,priority) {

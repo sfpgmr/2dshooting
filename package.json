@@ -38,6 +38,9 @@
     "postcss-mixins": "^4.0.0",
     "postcss-nested": "^1.0.0",
     "postcss-simple-vars": "^1.2.0",
+    "rollup": "^0.41.6",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
     "uglifyify": "^3.0.1",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.6.1"

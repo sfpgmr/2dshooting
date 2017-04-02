@@ -1,9 +1,3 @@
-/// <reference path="graphics.js" />
-/// <reference path="io.js" />
-/// <reference path="song.js" />
-/// <reference path="text.js" />
-/// <reference path="util.js" />
-/// <reference path="dsp.js" />
 "use strict";
 //// Web Audio API ラッパークラス ////
 var fft = new FFT(4096, 44100);

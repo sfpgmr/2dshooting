@@ -1,18 +1,18 @@
 "use strict";
 //var STAGE_MAX = 1;
-import * as sfg from './global';
-import * as util from './util';
-import * as audio from './audio';
+import {sfg} from './global.js';
+import * as util from './util.js';
+import * as audio from './audio.js';
 //import * as song from './song';
-import * as graphics from './graphics';
-import * as io from './io';
-import * as comm from './comm';
-import * as text from './text';
-import * as gameobj from './gameobj';
-import * as myship from './myship';
-import * as enemies from './enemies';
-import * as effectobj from './effectobj';
-import EventEmitter from './eventEmitter3';
+import * as graphics from './graphics.js';
+import * as io from './io.js';
+import * as comm from './comm.js';
+import * as text from './text.js';
+import * as gameobj from './gameobj.js';
+import * as myship from './myship.js';
+import * as enemies from './enemies.js';
+import * as effectobj from './effectobj.js';
+import EventEmitter from './eventEmitter3.js';
 
 
 class ScoreEntry {
@@ -452,11 +452,11 @@ initCommAndHighScore()
         var color = new THREE.Color();
 
         var r = data.data[i++];
-        var g = data.data[i++];
+        var sfg = data.data[i++];
         var b = data.data[i++];
         var a = data.data[i++];
         if (a != 0) {
-          color.setRGB(r / 255.0, g / 255.0, b / 255.0);
+          color.setRGB(r / 255.0, sfg / 255.0, b / 255.0);
           var vert = new THREE.Vector3(((x - w / 2.0)), ((y - h / 2)) * -1, 0.0);
           var vert2 = new THREE.Vector3(1200 * Math.random() - 600, 1200 * Math.random() - 600, 1200 * Math.random() - 600);
           geometry.vert_start.push(new THREE.Vector3(vert2.x - vert.x, vert2.y - vert.y, vert2.z - vert.z));

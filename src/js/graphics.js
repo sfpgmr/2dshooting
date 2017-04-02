@@ -1,11 +1,11 @@
 "use strict";
-import * as g from './global';
+import {sfg} from './global.js';
 
 /// テクスチャーとしてcanvasを使う場合のヘルパー
 export function CanvasTexture(width, height) {
   this.canvas = document.createElement('canvas');
-  this.canvas.width = width || g.VIRTUAL_WIDTH;
-  this.canvas.height = height || g.VIRTUAL_HEIGHT;
+  this.canvas.width = width || sfg.VIRTUAL_WIDTH;
+  this.canvas.height = height || sfg.VIRTUAL_HEIGHT;
   this.ctx = this.canvas.getContext('2d');
   this.texture = new THREE.Texture(this.canvas);
   this.texture.magFilter = THREE.NearestFilter;
@@ -25,11 +25,11 @@ export function CanvasTexture(width, height) {
 export function Progress() {
   this.canvas = document.createElement('canvas');;
   var width = 1;
-  while (width <= g.VIRTUAL_WIDTH){
+  while (width <= sfg.VIRTUAL_WIDTH){
     width *= 2;
   }
   var height = 1;
-  while (height <= g.VIRTUAL_HEIGHT){
+  while (height <= sfg.VIRTUAL_HEIGHT){
     height *= 2;
   }
   this.canvas.width = width;
@@ -47,8 +47,8 @@ export function Progress() {
   this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
   this.geometry = new THREE.PlaneGeometry(this.canvas.width, this.canvas.height);
   this.mesh = new THREE.Mesh(this.geometry, this.material);
-  this.mesh.position.x = (width - g.VIRTUAL_WIDTH) / 2;
-  this.mesh.position.y =  - (height - g.VIRTUAL_HEIGHT) / 2;
+  this.mesh.position.x = (width - sfg.VIRTUAL_WIDTH) / 2;
+  this.mesh.position.y =  - (height - sfg.VIRTUAL_HEIGHT) / 2;
 
   //this.texture.premultiplyAlpha = true;
 }
@@ -89,11 +89,11 @@ export function createGeometryFromImage(image) {
         var color = new THREE.Color();
 
         var r = data.data[i++];
-        var g = data.data[i++];
+        var sfg = data.data[i++];
         var b = data.data[i++];
         var a = data.data[i++];
         if (a != 0) {
-          color.setRGB(r / 255.0, g / 255.0, b / 255.0);
+          color.setRGB(r / 255.0, sfg / 255.0, b / 255.0);
           var vert = new THREE.Vector3(((x - w / 2.0)) * 2.0, ((y - h / 2)) * -2.0, 0.0);
           geometry.vertices.push(vert);
           geometry.colors.push(color);
